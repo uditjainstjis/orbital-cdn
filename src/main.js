@@ -155,6 +155,60 @@ async function main() {
       if (isRunning()) skipSequence()
     }
   })
+
+  // 13. Mobile bottom tabs
+  _initMobileTabs()
+}
+
+function _initMobileTabs() {
+  const isMobile = () => window.innerWidth <= 768
+  const panelLeft  = document.getElementById('panel-left')
+  const panelRight = document.getElementById('panel-right')
+
+  function closeAll() {
+    panelLeft?.classList.remove('mob-open')
+    panelRight?.classList.remove('mob-open')
+    document.querySelectorAll('.mob-tab').forEach(t => t.classList.remove('active'))
+  }
+
+  document.querySelectorAll('.mob-tab[data-panel]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!isMobile()) return
+      const target = btn.dataset.panel === 'left' ? panelLeft : panelRight
+      const isOpen = target?.classList.contains('mob-open')
+      closeAll()
+      if (!isOpen) {
+        target?.classList.add('mob-open')
+        btn.classList.add('active')
+      }
+    })
+  })
+
+  // Mobile send button in tab bar
+  document.getElementById('mob-send')?.addEventListener('click', async () => {
+    if (!isMobile()) return
+    if (isRunning()) return
+    closeAll()
+    // Reuse the same logic as the main send button
+    document.getElementById('send-btn')?.click()
+  })
+
+  // Tap-outside to close sheets
+  document.getElementById('globe-container')?.addEventListener('click', () => {
+    if (isMobile()) closeAll()
+  })
+
+  // Mobile insights close button
+  const mobClose = document.getElementById('insights-close-mob')
+  if (mobClose) {
+    mobClose.style.display = isMobile() ? 'flex' : 'none'
+    mobClose.addEventListener('click', () => {
+      document.getElementById('insights-overlay')?.classList.add('hidden')
+    })
+    window.addEventListener('resize', () => {
+      mobClose.style.display = isMobile() ? 'flex' : 'none'
+    })
+  }
 }
 
 // ─── Arc management ───────────────────────────────────────────────────────

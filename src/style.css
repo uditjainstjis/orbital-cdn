@@ -910,11 +910,254 @@ html, body {
 /* ── Section divider ──────────────────────────────────────────────────────── */
 .ins-divider { border:none; border-top:1px solid var(--border); margin:0 0 72px; }
 
-/* Responsive (tablet) */
+/* ── Mobile tab bar (hidden on desktop) ───────────────────────────────────── */
+#mobile-tabs { display:none; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   TABLET  ≤ 1200px
+   ══════════════════════════════════════════════════════════════════════════════ */
 @media (max-width:1200px) {
-  #panel-left { width:270px; }
+  #panel-left  { width:270px; }
   #panel-right { width:290px; }
-  .layers { right:322px; }
+  .layers      { right:322px; }
   #insights-content { padding:32px 28px; }
   #insights-sidebar { width:200px; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MOBILE  ≤ 768px
+   ══════════════════════════════════════════════════════════════════════════════ */
+@media (max-width:768px) {
+
+  /* ── Topbar ─────────────────────────────────────────────────────────────── */
+  #topbar {
+    padding:8px 12px;
+    flex-wrap:nowrap;
+    gap:8px;
+  }
+  .logo { font-size:11px; white-space:nowrap; }
+  .logo span { display:none; }
+  .top-badges { gap:5px; flex-shrink:0; }
+  .badge-sats, .badge-dc, .badge-time { display:none; }
+  .badge-live { font-size:9px; padding:2px 7px; }
+  .insights-btn { font-size:9px !important; padding:3px 8px !important; }
+
+  /* ── Side panels become bottom sheets ───────────────────────────────────── */
+  #panel-left,
+  #panel-right {
+    position: fixed;
+    left: 0; right: 0;
+    bottom: 56px;        /* above tab bar */
+    top: auto;
+    width: 100%;
+    max-height: 65vh;
+    border-radius: 16px 16px 0 0;
+    border-bottom: none;
+    transform: translateY(100%);
+    transition: transform .32s cubic-bezier(.4,0,.2,1);
+    z-index: 300;
+    overflow-y: auto;
+  }
+  #panel-left.mob-open,
+  #panel-right.mob-open {
+    transform: translateY(0);
+  }
+
+  /* drag handle hint */
+  #panel-left::before,
+  #panel-right::before {
+    content: '';
+    display: block;
+    width: 40px; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 10px auto 4px;
+    flex-shrink: 0;
+  }
+
+  /* ── Mobile tab bar ─────────────────────────────────────────────────────── */
+  #mobile-tabs {
+    display: flex;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 56px;
+    z-index: 400;
+    background: rgba(2,4,8,.95);
+    border-top: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+  .mob-tab {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    border-top: 2px solid transparent;
+  }
+  .mob-tab.active { color: var(--cyan); border-top-color: var(--cyan); }
+  #mob-send {
+    background: linear-gradient(135deg, rgba(0,212,255,.15), rgba(124,58,237,.15));
+    color: var(--cyan);
+    border-top-color: var(--cyan);
+    font-weight: 700;
+  }
+  /* Hide the desktop send button on mobile — send is via tab bar */
+  #panel-left .send-btn { display:none; }
+
+  /* ── Playback controls ──────────────────────────────────────────────────── */
+  .playback {
+    bottom: 64px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 6px 12px;
+    gap: 8px;
+  }
+
+  /* ── Layer controls (move into a compact floating button) ───────────────── */
+  #layer-controls {
+    display: none;
+  }
+
+  /* ── Reasoning ticker ───────────────────────────────────────────────────── */
+  #reasoning-ticker {
+    bottom: 118px;
+    font-size: 11px;
+    padding: 6px 14px;
+    max-width: calc(100vw - 32px);
+    white-space: normal;
+    text-align: center;
+  }
+
+  /* ── Inspector ──────────────────────────────────────────────────────────── */
+  .inspector {
+    left: 12px !important;
+    right: 12px;
+    bottom: 120px;
+    top: auto !important;
+    width: auto !important;
+    min-width: 0;
+  }
+
+  /* ── Deep dive modal ────────────────────────────────────────────────────── */
+  #modal-overlay { padding: 0; align-items: flex-end; }
+  .modal {
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: 16px 16px 0 0;
+  }
+  .modal-nav { gap:2px; padding:6px 12px; }
+  .modal-nav-btn { font-size:9px; padding:3px 7px; }
+  .modal-section { padding:14px 16px; }
+
+  /* ── Insights overlay — single column ──────────────────────────────────── */
+  #insights-page { flex-direction: column; }
+
+  #insights-sidebar {
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 14px 0 0;
+    flex-direction: column;
+  }
+  .insights-logo { padding:0 16px 12px; font-size:11px; }
+
+  #insights-nav {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 0 12px 12px;
+    gap: 6px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  #insights-nav::-webkit-scrollbar { display:none; }
+
+  .ins-nav-item {
+    flex-shrink: 0;
+    flex-direction: column;
+    gap: 3px;
+    padding: 6px 10px;
+    font-size: 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    white-space: nowrap;
+    width: auto;
+  }
+  .ins-nav-item.active {
+    border-left: none;
+    border-color: var(--cyan);
+    padding-left: 10px;
+  }
+  .nav-icon { font-size:12px; }
+
+  .insights-close {
+    display: none; /* use back gesture / overlay tap on mobile */
+  }
+
+  /* floating close button for mobile insights */
+  #insights-overlay::after {
+    content: '✕ Close';
+    position: fixed;
+    top: 14px; right: 14px;
+    z-index: 3000;
+    padding: 6px 14px;
+    background: rgba(239,68,68,.15);
+    border: 1px solid rgba(239,68,68,.4);
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fca5a5;
+    cursor: pointer;
+    pointer-events: none; /* handled via JS close button */
+  }
+
+  #insights-content {
+    padding: 24px 16px 40px;
+    max-width: 100%;
+  }
+
+  .ins-section-title { font-size:20px; }
+  .ins-section-sub   { font-size:13px; }
+
+  .arch-diagram { gap:0; }
+  .arch-tier { flex-direction:column; gap:6px; }
+  .arch-tier-label { width:auto; justify-content:flex-start; padding:0 0 0 4px; font-size:9px; padding-right:0; }
+  .arch-tier-body { flex-wrap:wrap; padding:12px; }
+  .arch-tier-connector { margin-left:0; }
+
+  .ins-cards { grid-template-columns:1fr; }
+  .phys-grid { grid-template-columns:1fr; }
+
+  .ins-table { font-size:11px; }
+  .ins-table th, .ins-table td { padding:6px 8px; }
+
+  .ins-equation { font-size:11px; line-height:1.8; padding:14px; }
+  .ins-equation .eq-main { font-size:12px; word-break:break-all; }
+
+  /* close btn visible on mobile */
+  #insights-close-mob {
+    display: flex;
+    position: fixed;
+    top: 12px; right: 12px;
+    z-index: 3000;
+    padding: 6px 14px;
+    background: rgba(239,68,68,.15);
+    border: 1px solid rgba(239,68,68,.4);
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fca5a5;
+    cursor: pointer;
+    font-family: 'Space Grotesk', sans-serif;
+  }
 }

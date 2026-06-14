@@ -137,6 +137,13 @@
       <label class="layer-toggle"><input type="checkbox" id="toggle-trails"> Orbit Trails</label>
     </div>
 
+    <!-- Mobile bottom tab bar -->
+    <div id="mobile-tabs">
+      <button class="mob-tab active" data-panel="left">⚙️ Controls</button>
+      <button class="mob-tab" data-panel="right">📊 Results</button>
+      <button class="mob-tab" id="mob-send">▶ Send</button>
+    </div>
+
     <!-- Reasoning ticker (bottom center) -->
     <div id="reasoning-ticker" class="hidden">
       <div id="ticker-text"></div>
@@ -160,6 +167,7 @@
 
   <!-- Architecture & Insights overlay -->
   <div id="insights-overlay" class="hidden">
+    <button id="insights-close-mob" style="display:none">✕ Close</button>
     <div id="insights-page">
       <div id="insights-sidebar">
         <div class="insights-logo">◎ ORBITAL CDN</div>
