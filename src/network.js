@@ -24,11 +24,12 @@ export const CITIES = [
 ]
 
 // SAA bounding box as a globe.gl polygon (GeoJSON-like)
+// GeoJSON Polygon coordinates: [outerRing, ...holes]
+// Each ring = array of [lon, lat] positions (GeoJSON is lon-first)
 export const SAA_POLYGON = [{
   name: 'SAA',
-  polygon: [[
-    [-80, -50], [10, -50], [10, 0], [-80, 0], [-80, -50]
-  ].map(([lon, lat]) => [lon, lat])],
+  // polygon is already one ring wrapped in the coordinates array
+  polygon: [[-80, -50], [10, -50], [10, 0], [-80, 0], [-80, -50]],
 }]
 
 let selectedCityName = 'Delhi'
@@ -41,7 +42,7 @@ export function initNetwork(world) {
     .polygonsData(SAA_POLYGON)
     .polygonGeoJsonGeometry(d => ({
       type: 'Polygon',
-      coordinates: [d.polygon],
+      coordinates: [[...d.polygon]], // outer ring wrapped in coordinates array
     }))
     .polygonCapColor(() => 'rgba(239,68,68,0.10)')
     .polygonSideColor(() => 'rgba(239,68,68,0.05)')
