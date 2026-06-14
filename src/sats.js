@@ -1,15 +1,15 @@
 import * as satellite from 'satellite.js'
 import * as THREE from 'three'
 
-export const PLANES = 6
-export const SATS_PER_PLANE = 12
+export const PLANES = 9
+export const SATS_PER_PLANE = 20
 const INC_DEG = 53
 const LEO_ALT_KM = 550
-const DC_ALT_KM  = 620   // Orbital DCs at slightly higher SSO-ish orbit
+const DC_ALT_KM  = 640
 const EARTH_R_KM = 6371
 
-// DC positions: planes 0, 2, 4 → slot 0
-const DC_PLANE_SLOTS = [[0, 0], [2, 0], [4, 0]]
+// DC positions: planes 0, 2, 4, 6 → slot 0  (4 Orbital DCs)
+const DC_PLANE_SLOTS = [[0, 0], [2, 0], [4, 0], [6, 0]]
 
 export let sats = []
 export let satBodyMeshes = []   // {mesh, sat} pairs for raycasting
@@ -72,35 +72,35 @@ function _buildMeshes(scene, world) {
     if (sat.isDC) {
       // ── Orbital DC: large bus + big solar wings + ring + aura ──────────────
       const bodyMesh = new THREE.Mesh(
-        new THREE.BoxGeometry(1.8, 0.75, 0.75),
+        new THREE.BoxGeometry(4.2, 1.8, 1.8),
         new THREE.MeshBasicMaterial({ color: 0xf59e0b })
       )
       group.add(bodyMesh)
 
-      const pGeo = new THREE.PlaneGeometry(2.5, 0.7)
+      const pGeo = new THREE.PlaneGeometry(6.0, 1.65)
       const pMatL = new THREE.MeshBasicMaterial({ color: 0xd97706, transparent: true, opacity: 0.82, side: THREE.DoubleSide })
       const pMatR = pMatL.clone()
       const panelL = new THREE.Mesh(pGeo, pMatL)
-      panelL.position.set(-2.15, 0, 0)
+      panelL.position.set(-5.1, 0, 0)
       const panelR = new THREE.Mesh(pGeo, pMatR)
-      panelR.position.set(2.15, 0, 0)
+      panelR.position.set(5.1, 0, 0)
       group.add(panelL, panelR)
 
-      // Solar-cell grid lines on panels (thin cross lines give texture)
+      // Solar-cell grid lines on panels
       const lGeo = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(-1.25, 0, 0.001), new THREE.Vector3(1.25, 0, 0.001),
-        new THREE.Vector3(0, -0.35, 0.001), new THREE.Vector3(0, 0.35, 0.001),
+        new THREE.Vector3(-3.0, 0, 0.001), new THREE.Vector3(3.0, 0, 0.001),
+        new THREE.Vector3(0, -0.82, 0.001), new THREE.Vector3(0, 0.82, 0.001),
       ])
       const lMat = new THREE.LineBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0.45 })
       const linesL = new THREE.LineSegments(lGeo, lMat)
-      linesL.position.set(-2.15, 0, 0)
+      linesL.position.set(-5.1, 0, 0)
       const linesR = new THREE.LineSegments(lGeo.clone(), lMat.clone())
-      linesR.position.set(2.15, 0, 0)
+      linesR.position.set(5.1, 0, 0)
       group.add(linesL, linesR)
 
       // Glow ring
       const ring = new THREE.Mesh(
-        new THREE.RingGeometry(1.0, 1.6, 32),
+        new THREE.RingGeometry(2.4, 3.8, 32),
         new THREE.MeshBasicMaterial({ color: 0xf59e0b, transparent: true, opacity: 0.22, side: THREE.DoubleSide })
       )
       ring.rotation.x = Math.PI / 2
@@ -108,7 +108,7 @@ function _buildMeshes(scene, world) {
 
       // Soft aura sphere
       group.add(new THREE.Mesh(
-        new THREE.SphereGeometry(2.0, 8, 8),
+        new THREE.SphereGeometry(4.8, 8, 8),
         new THREE.MeshBasicMaterial({ color: 0xf59e0b, transparent: true, opacity: 0.05 })
       ))
 
@@ -117,18 +117,18 @@ function _buildMeshes(scene, world) {
     } else {
       // ── LEO Relay Satellite: compact bus + solar wings ──────────────────────
       const bodyMesh = new THREE.Mesh(
-        new THREE.BoxGeometry(0.45, 0.18, 0.18),
+        new THREE.BoxGeometry(1.4, 0.55, 0.55),
         new THREE.MeshBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.95 })
       )
       group.add(bodyMesh)
 
-      const pGeo = new THREE.PlaneGeometry(0.68, 0.20)
+      const pGeo = new THREE.PlaneGeometry(2.0, 0.58)
       const pMatL = new THREE.MeshBasicMaterial({ color: 0x1a6da8, transparent: true, opacity: 0.88, side: THREE.DoubleSide })
       const pMatR = pMatL.clone()
       const panelL = new THREE.Mesh(pGeo, pMatL)
-      panelL.position.set(-0.57, 0, 0)
+      panelL.position.set(-1.7, 0, 0)
       const panelR = new THREE.Mesh(pGeo, pMatR)
-      panelR.position.set(0.57, 0, 0)
+      panelR.position.set(1.7, 0, 0)
       group.add(panelL, panelR)
 
       sat.bodyMesh    = bodyMesh
