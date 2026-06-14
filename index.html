@@ -22,6 +22,7 @@
         <span class="badge badge-sats" id="sat-badge">72 SATS</span>
         <span class="badge badge-dc" id="dc-badge">3 DCs SUNLIT</span>
         <span class="badge badge-time" id="utc-clock">UTC 00:00:00</span>
+        <button class="badge insights-btn" id="insights-btn">📐 Architecture &amp; Insights</button>
       </div>
     </div>
 
@@ -154,6 +155,18 @@
         <div class="modal-nav" id="modal-nav"></div>
         <div id="modal-body" class="modal-body"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- Architecture & Insights overlay -->
+  <div id="insights-overlay" class="hidden">
+    <div id="insights-page">
+      <div id="insights-sidebar">
+        <div class="insights-logo">◎ ORBITAL CDN</div>
+        <nav id="insights-nav"></nav>
+        <button class="insights-close" id="insights-close">✕ Close</button>
+      </div>
+      <div id="insights-content"></div>
     </div>
   </div>
 

@@ -1,5 +1,6 @@
 // Orbital CDN 3D Live Simulator — entry point
 
+import { initInsights } from './insights.js'
 import { initGlobe, getWorld, updateEarth, toggleClouds, toggleNightLights } from './globe.js'
 import { initSatellites, updateSatellites, sats, sunlitDCCount, toggleISL } from './sats.js'
 import { initNetwork, setSelectedCity, toggleSAA } from './network.js'
@@ -33,6 +34,7 @@ async function main() {
   initNetwork(world)
 
   // 4. UI
+  initInsights()
   initCityGrid(city => {
     setSelectedCity(city.city, world)
     if (!isRunning()) world.pointOfView({ lat: city.lat, lng: city.lon, altitude: 1.8 }, 1200)
