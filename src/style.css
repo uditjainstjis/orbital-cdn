@@ -372,11 +372,13 @@ html, body {
 
 /* INSPECTOR CARD */
 .inspector {
-  position:absolute;
-  z-index:200;
-  padding:14px;
+  position:fixed;
+  z-index:500;
+  padding:14px 16px;
   min-width:240px;
+  max-width:270px;
   pointer-events:none;
+  animation:fadeIn .15s ease;
 }
 .inspector h4 {
   font-size:13px;

@@ -406,17 +406,57 @@ elev_mask = <span class="val">25°</span>            <span class="cmt">// Starli
 export function showInspector(node, x, y) {
   const el = document.getElementById('inspector')
   if (!el) return
-  const rows = Object.entries(node)
-    .filter(([k]) => !['mesh', 'satrec', '_d', 'id', 'plane', 'slot', 'raan0', 'anomaly0'].includes(k))
-    .map(([k, v]) => {
-      const display = typeof v === 'number' ? v.toFixed(3)
-                    : typeof v === 'boolean' ? (v ? '✓ yes' : '✗ no')
-                    : v ?? '—'
-      return `<div class="inspector-row"><span class="inspector-key">${k}</span><span class="inspector-val">${display}</span></div>`
-    }).join('')
-  el.innerHTML = `<h4>${node.isDC ? '🛰️ ' + node.dcName : node.name ? '🌍 ' + node.name : '📡 SAT-' + node.id}</h4>${rows}`
-  el.style.left    = Math.min(x + 12, window.innerWidth  - 260) + 'px'
-  el.style.top     = Math.min(y + 12, window.innerHeight - 200) + 'px'
+
+  let html = ''
+
+  if (node.isDC) {
+    // ── Orbital Data Center ────────────────────────────────────────────────
+    const solar = !node.eclipsed
+    html = `
+      <h4 style="color:var(--amber)">🛰️ ${node.dcName} — Orbital DC</h4>
+      <div class="inspector-row">
+        <span class="inspector-key">Status</span>
+        <span class="inspector-val" style="color:${solar ? 'var(--green)' : 'var(--muted)'}">${solar ? '☀ SUNLIT' : '🌑 ECLIPSE'}</span>
+      </div>
+      <div class="inspector-row"><span class="inspector-key">Lat / Lon</span><span class="inspector-val">${node.lat.toFixed(1)}° ${node.lon.toFixed(1)}°</span></div>
+      <div class="inspector-row"><span class="inspector-key">Altitude</span><span class="inspector-val">${node.alt.toFixed(0)} km</span></div>
+      <div class="inspector-row"><span class="inspector-key">Orbit</span><span class="inspector-val">SSO ${node.plane % 2 === 0 ? 'dawn' : 'dusk'}-pass</span></div>
+      <div class="inspector-row"><span class="inspector-key">Battery</span><span class="inspector-val">${(node.battery * 100).toFixed(0)}%</span></div>
+      <div style="margin:6px 0 2px;height:3px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden">
+        <div style="width:${(node.battery*100).toFixed(0)}%;height:100%;background:${node.battery>0.4?'var(--green)':'var(--amber)'};border-radius:2px"></div>
+      </div>
+      <div class="inspector-row"><span class="inspector-key">Compute</span><span class="inspector-val">${(node.load*100).toFixed(0)}% load</span></div>
+      <div class="inspector-row"><span class="inspector-key">Radiation</span><span class="inspector-val" style="color:${node.inSAA?'var(--red)':'var(--green)'}">${node.inSAA?'⚠ SAA':'✓ clean'}</span></div>
+      <div style="margin-top:8px;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace">Plane ${node.plane} · Slot ${node.slot} · ID ${node.id}</div>
+    `
+  } else if (node.name) {
+    // ── Ground Gateway ─────────────────────────────────────────────────────
+    html = `<h4>◇ ${node.name}</h4><div class="inspector-row"><span class="inspector-key">Type</span><span class="inspector-val">Ground Gateway</span></div>`
+  } else {
+    // ── LEO Relay Satellite ────────────────────────────────────────────────
+    const statusColor = node.inSAA ? 'var(--red)' : node.eclipsed ? 'var(--muted)' : 'var(--cyan)'
+    const statusText  = node.inSAA ? '⚠ SAA ZONE' : node.eclipsed ? '🌑 ECLIPSE' : '☀ NOMINAL'
+    html = `
+      <h4 style="color:var(--cyan)">📡 LEO-${String(node.id).padStart(2,'0')}</h4>
+      <div class="inspector-row">
+        <span class="inspector-key">Status</span>
+        <span class="inspector-val" style="color:${statusColor}">${statusText}</span>
+      </div>
+      <div class="inspector-row"><span class="inspector-key">Lat / Lon</span><span class="inspector-val">${node.lat.toFixed(1)}° ${node.lon.toFixed(1)}°</span></div>
+      <div class="inspector-row"><span class="inspector-key">Altitude</span><span class="inspector-val">${node.alt.toFixed(0)} km</span></div>
+      <div class="inspector-row"><span class="inspector-key">Plane / Slot</span><span class="inspector-val">P${node.plane} S${node.slot}</span></div>
+      <div class="inspector-row"><span class="inspector-key">Battery</span><span class="inspector-val">${(node.battery*100).toFixed(0)}%</span></div>
+      <div style="margin:6px 0 2px;height:3px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden">
+        <div style="width:${(node.battery*100).toFixed(0)}%;height:100%;background:${node.battery>0.4?'var(--cyan)':'var(--red)'};border-radius:2px"></div>
+      </div>
+      <div class="inspector-row"><span class="inspector-key">ISL links</span><span class="inspector-val">4 active</span></div>
+      <div style="margin-top:8px;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace">Walker-Delta · 53° incl · ${node.satrec ? 'SGP4/TLE' : 'analytic'}</div>
+    `
+  }
+
+  el.innerHTML = html
+  el.style.left = Math.min(x + 14, window.innerWidth  - 270) + 'px'
+  el.style.top  = Math.min(y + 14, window.innerHeight - 220) + 'px'
   el.classList.remove('hidden')
 }
 

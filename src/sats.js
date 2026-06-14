@@ -12,7 +12,16 @@ const EARTH_R_KM = 6371
 const DC_PLANE_SLOTS = [[0, 0], [2, 0], [4, 0]]
 
 export let sats = []
+export let satBodyMeshes = []   // {mesh, sat} pairs for raycasting
 let satGroup, islSegments, islPositions
+
+// Pre-allocated temp vectors — avoids GC pressure in 60fps loop
+const _vR   = new THREE.Vector3()
+const _vT   = new THREE.Vector3()
+const _vB   = new THREE.Vector3()
+const _vRef = new THREE.Vector3()
+const _vPos = new THREE.Vector3()
+const _mat4 = new THREE.Matrix4()
 
 const startMs = Date.now()
 
@@ -55,30 +64,80 @@ function _buildMeshes(scene, world) {
   satGroup = new THREE.Group()
   satGroup.name = 'satellites'
   scene.add(satGroup)
+  satBodyMeshes = []
 
   sats.forEach(sat => {
+    const group = new THREE.Group()
+
     if (sat.isDC) {
-      const g  = new THREE.SphereGeometry(0.7, 12, 12)
-      const m  = new THREE.MeshBasicMaterial({ color: 0xf59e0b })
-      sat.mesh = new THREE.Mesh(g, m)
+      // ── Orbital DC: large bus + big solar wings + ring + aura ──────────────
+      const bodyMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(1.8, 0.75, 0.75),
+        new THREE.MeshBasicMaterial({ color: 0xf59e0b })
+      )
+      group.add(bodyMesh)
 
-      // Glow ring in equatorial plane of the sphere
-      const rg = new THREE.RingGeometry(1.0, 1.55, 36)
-      const rm = new THREE.MeshBasicMaterial({ color: 0xf59e0b, transparent: true, opacity: 0.28, side: THREE.DoubleSide })
-      const ring = new THREE.Mesh(rg, rm)
+      const pGeo = new THREE.PlaneGeometry(2.5, 0.7)
+      const pMatL = new THREE.MeshBasicMaterial({ color: 0xd97706, transparent: true, opacity: 0.82, side: THREE.DoubleSide })
+      const pMatR = pMatL.clone()
+      const panelL = new THREE.Mesh(pGeo, pMatL)
+      panelL.position.set(-2.15, 0, 0)
+      const panelR = new THREE.Mesh(pGeo, pMatR)
+      panelR.position.set(2.15, 0, 0)
+      group.add(panelL, panelR)
+
+      // Solar-cell grid lines on panels (thin cross lines give texture)
+      const lGeo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-1.25, 0, 0.001), new THREE.Vector3(1.25, 0, 0.001),
+        new THREE.Vector3(0, -0.35, 0.001), new THREE.Vector3(0, 0.35, 0.001),
+      ])
+      const lMat = new THREE.LineBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0.45 })
+      const linesL = new THREE.LineSegments(lGeo, lMat)
+      linesL.position.set(-2.15, 0, 0)
+      const linesR = new THREE.LineSegments(lGeo.clone(), lMat.clone())
+      linesR.position.set(2.15, 0, 0)
+      group.add(linesL, linesR)
+
+      // Glow ring
+      const ring = new THREE.Mesh(
+        new THREE.RingGeometry(1.0, 1.6, 32),
+        new THREE.MeshBasicMaterial({ color: 0xf59e0b, transparent: true, opacity: 0.22, side: THREE.DoubleSide })
+      )
       ring.rotation.x = Math.PI / 2
-      sat.mesh.add(ring)
+      group.add(ring)
 
-      // Soft aura
-      const ag  = new THREE.SphereGeometry(1.6, 8, 8)
-      const am  = new THREE.MeshBasicMaterial({ color: 0xf59e0b, transparent: true, opacity: 0.07 })
-      sat.mesh.add(new THREE.Mesh(ag, am))
+      // Soft aura sphere
+      group.add(new THREE.Mesh(
+        new THREE.SphereGeometry(2.0, 8, 8),
+        new THREE.MeshBasicMaterial({ color: 0xf59e0b, transparent: true, opacity: 0.05 })
+      ))
+
+      sat.bodyMesh   = bodyMesh
+      sat.panelMeshes = [panelL, panelR]
     } else {
-      const g  = new THREE.SphereGeometry(0.22, 6, 6)
-      const m  = new THREE.MeshBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.72 })
-      sat.mesh = new THREE.Mesh(g, m)
+      // ── LEO Relay Satellite: compact bus + solar wings ──────────────────────
+      const bodyMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(0.45, 0.18, 0.18),
+        new THREE.MeshBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.95 })
+      )
+      group.add(bodyMesh)
+
+      const pGeo = new THREE.PlaneGeometry(0.68, 0.20)
+      const pMatL = new THREE.MeshBasicMaterial({ color: 0x1a6da8, transparent: true, opacity: 0.88, side: THREE.DoubleSide })
+      const pMatR = pMatL.clone()
+      const panelL = new THREE.Mesh(pGeo, pMatL)
+      panelL.position.set(-0.57, 0, 0)
+      const panelR = new THREE.Mesh(pGeo, pMatR)
+      panelR.position.set(0.57, 0, 0)
+      group.add(panelL, panelR)
+
+      sat.bodyMesh    = bodyMesh
+      sat.panelMeshes = [panelL, panelR]
     }
-    satGroup.add(sat.mesh)
+
+    sat.mesh = group
+    satGroup.add(group)
+    satBodyMeshes.push({ mesh: sat.bodyMesh, sat })
   })
 }
 
@@ -136,20 +195,36 @@ export function updateSatellites(world) {
     if (!sat.eclipsed) sat.battery = Math.min(1, sat.battery + 0.00008)
     else               sat.battery = Math.max(0.1, sat.battery - 0.00004)
 
-    // Update Three.js mesh position
-    if (sat.mesh) {
+    // Update Three.js mesh position + orientation
+    if (sat.mesh && sat.bodyMesh) {
       const altGlobeR = sat.alt / EARTH_R_KM
       const pos = world.getCoords(sat.lat, sat.lon, altGlobeR)
-      sat.mesh.position.set(pos.x, pos.y, pos.z)
+      _vPos.set(pos.x, pos.y, pos.z)
+      sat.mesh.position.copy(_vPos)
 
+      // Orient group: +X = orbital tangent, +Y = radial outward, +Z = binormal
+      _vR.copy(_vPos).normalize()
+      if (Math.abs(_vR.y) < 0.99) _vRef.set(0, 1, 0)
+      else                         _vRef.set(1, 0, 0)
+      _vT.crossVectors(_vRef, _vR).normalize()
+      _vB.crossVectors(_vR, _vT)
+      _mat4.makeBasis(_vT, _vR, _vB)
+      sat.mesh.quaternion.setFromRotationMatrix(_mat4)
+
+      // Color by state
       if (!sat.isDC) {
-        const color = sat.inSAA    ? 0xef4444
-                    : sat.eclipsed ? 0x475569
-                    : 0x00d4ff
-        sat.mesh.material.color.setHex(color)
-        sat.mesh.material.opacity = sat.inSAA || sat.eclipsed ? 0.48 : 0.72
+        const bColor = sat.inSAA ? 0xef4444 : sat.eclipsed ? 0x475569 : 0x00d4ff
+        const pColor = sat.inSAA ? 0xcc2222 : sat.eclipsed ? 0x334155 : 0x1a6da8
+        const bOp = sat.inSAA || sat.eclipsed ? 0.5 : 0.95
+        const pOp = sat.inSAA || sat.eclipsed ? 0.35 : 0.88
+        sat.bodyMesh.material.color.setHex(bColor)
+        sat.bodyMesh.material.opacity = bOp
+        sat.panelMeshes.forEach(p => { p.material.color.setHex(pColor); p.material.opacity = pOp })
       } else {
-        sat.mesh.material.color.setHex(sat.eclipsed ? 0x6b7280 : 0xf59e0b)
+        const bColor = sat.eclipsed ? 0x6b7280 : 0xf59e0b
+        const pColor = sat.eclipsed ? 0x4b5563 : 0xd97706
+        sat.bodyMesh.material.color.setHex(bColor)
+        sat.panelMeshes.forEach(p => p.material.color.setHex(pColor))
       }
     }
   })

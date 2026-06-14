@@ -1,8 +1,9 @@
 // Orbital CDN 3D Live Simulator — entry point
 
+import * as THREE from 'three'
 import { initInsights } from './insights.js'
 import { initGlobe, getWorld, updateEarth, toggleClouds, toggleNightLights } from './globe.js'
-import { initSatellites, updateSatellites, sats, sunlitDCCount, toggleISL } from './sats.js'
+import { initSatellites, updateSatellites, sats, satBodyMeshes, sunlitDCCount, toggleISL } from './sats.js'
 import { initNetwork, setSelectedCity, toggleSAA } from './network.js'
 import { runSimulation } from './engine.js'
 import {
@@ -16,6 +17,10 @@ import {
 } from './ui.js'
 
 // ─── Boot ─────────────────────────────────────────────────────────────────
+
+const _raycaster  = new THREE.Raycaster()
+const _mouse      = new THREE.Vector2()
+let   _hoverReady = false   // enable hover only after first routing completes
 
 async function main() {
   const container = document.getElementById('globe-container')
@@ -53,6 +58,7 @@ async function main() {
       setSendState(false)
       showDeepDive(data)
       document.getElementById('btn-replay').disabled = false
+      _hoverReady = true   // unlock satellite hover tooltips
     },
   })
 
@@ -156,8 +162,44 @@ async function main() {
     }
   })
 
-  // 13. Mobile bottom tabs
+  // 13. Satellite hover tooltips via Three.js raycasting
+  _initSatHover(world)
+
+  // 14. Mobile bottom tabs
   _initMobileTabs()
+}
+
+function _initSatHover(world) {
+  const camera   = world.camera()
+  const domEl    = world.renderer().domElement
+
+  domEl.addEventListener('mousemove', (e) => {
+    if (!_hoverReady) return
+    const rect = domEl.getBoundingClientRect()
+    _mouse.x =  ((e.clientX - rect.left) / rect.width)  * 2 - 1
+    _mouse.y = -((e.clientY - rect.top)  / rect.height) * 2 + 1
+
+    _raycaster.setFromCamera(_mouse, camera)
+    // raycaster needs the actual THREE.Mesh objects (body meshes)
+    const meshList = satBodyMeshes.map(s => s.mesh)
+    const hits = _raycaster.intersectObjects(meshList, false)
+
+    if (hits.length > 0) {
+      const hitMesh = hits[0].object
+      const entry   = satBodyMeshes.find(s => s.mesh === hitMesh)
+      if (entry) {
+        showInspector(entry.sat, e.clientX, e.clientY)
+        domEl.style.cursor = 'pointer'
+        return
+      }
+    }
+    hideInspector()
+    domEl.style.cursor = ''
+  })
+
+  domEl.addEventListener('mouseleave', () => {
+    hideInspector()
+  })
 }
 
 function _initMobileTabs() {
