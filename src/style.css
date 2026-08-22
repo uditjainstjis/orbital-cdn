@@ -712,7 +712,7 @@ code, kbd, .mono { font-variant-numeric: tabular-nums; }
   cursor: pointer;
   transition: all .2s;
 }
-.insights-close:hover { background: rgba(201,115,107,.18); border-color: var(--red); color:#fff; }
+.insights-close:hover { background: var(--card-hi); border-color: var(--border-hi); color: var(--text); }
 
 /* ── Content area ─────────────────────────────────────────────────────────── */
 #insights-content {
@@ -1166,23 +1166,6 @@ code, kbd, .mono { font-variant-numeric: tabular-nums; }
     display: none; /* use back gesture / overlay tap on mobile */
   }
 
-  /* floating close button for mobile insights */
-  #insights-overlay::after {
-    content: '✕ Close';
-    position: fixed;
-    top: 14px; right: 14px;
-    z-index: 3000;
-    padding: 6px 14px;
-    background: rgba(201,115,107,.15);
-    border: 1px solid rgba(201,115,107,.4);
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--neg);
-    cursor: pointer;
-    pointer-events: none; /* handled via JS close button */
-  }
-
   #insights-content {
     padding: 24px 16px 40px;
     max-width: 100%;
@@ -1213,12 +1196,12 @@ code, kbd, .mono { font-variant-numeric: tabular-nums; }
     top: 12px; right: 12px;
     z-index: 3000;
     padding: 6px 14px;
-    background: rgba(201,115,107,.15);
-    border: 1px solid rgba(201,115,107,.4);
+    background: var(--card-hi);
+    border: 1px solid var(--border-hi);
     border-radius: 20px;
     font-size: 11px;
     font-weight: 600;
-    color: var(--neg);
+    color: var(--text-2);
     cursor: pointer;
     font-family: 'Space Grotesk', sans-serif;
   }

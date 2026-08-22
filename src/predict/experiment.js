@@ -18,8 +18,8 @@ import { GATEWAYS, CITIES } from '../network.js'
 import { POLICY_WEIGHTS, gwCostMs } from '../engine.js'
 import { fadeDbFor, LINK, HORIZONS_H } from './weather.js'
 import { AGENT, PREDICT } from './config.js'
-import TRACE from './weather_trace.json'
-import MODEL from './fade_model.json'
+import TRACE from './weather_trace.json' with { type: 'json' }
+import MODEL from './fade_model.json' with { type: 'json' }
 import { predictProba, vectorise } from './gbm.js'
 import { outageProbability } from './itu.js'
 

@@ -590,3 +590,23 @@ Edit/Write and every Stop; left as an opt-in. Vendored copy gitignored.
 - [2026-08-23 01:03]
   > change the UI to look clean and professional, avoid using loud "neon" colours, avoid gradients, and in all, use the impeccable skill to give the website a professional look
 
+- [2026-08-23 01:39]
+  > Judging Parameters Hardware & Software
+  > 
+  > For both hardware and software projects, evaluation will focus on:
+  > 
+  > - Task implementation how effectively the given problem/task has been addressed
+  > - Task complexity technical depth and difficulty of the solution
+  > - Technical execution quality and robustness of implementation
+  > - Innovation & creativity
+  > - Functionality & reliability
+  > - Documentation & presentation
+  > 
+  > For hardware projects, additional consideration will be given to industrial level implementation, including PCB design, physical board quality, circuit integration, component selection, and overall build quality.
+  > 
+  > For software projects, we will also consider architecture, code quality, user experience, scalability, and technical sophistication.
+  > 
+  > These parameters will help the judges evaluate the projects consistently.
+  > see our solution is software 
+  > i want to win see our code product and ppt context that you generated
+
