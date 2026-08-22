@@ -2,6 +2,7 @@
 
 import * as THREE from 'three'
 import { initIcons } from './icons.js'
+import { crossoverSvg, crossoverLegend } from './crossover.js'
 import { initInsights } from './insights.js'
 import { initGlobe, getWorld, updateEarth, toggleClouds, toggleNightLights } from './globe.js'
 import { initSatellites, updateSatellites, sats, satBodyMeshes, sunlitDCCount, toggleISL } from './sats.js'
@@ -75,6 +76,7 @@ async function main() {
   initIntro()
   renderIdleSummary()
   initShell()
+  initStage()
   setEventSink(pushEvent)
 
   // Debug/demo handle. Exposes the app's OWN module instances so a scenario can
@@ -111,6 +113,7 @@ async function main() {
     setArcs:    (arcs) => updateArcs(arcs, world),
     onComplete: (data) => {
       setSendState(false)
+      renderCrossover()         // fold the new request into the evidence chart
       showDeepDive(data)
       document.getElementById('btn-replay').disabled = false
       _hoverReady = true   // unlock satellite hover tooltips
@@ -140,6 +143,7 @@ async function main() {
     clearDecisions()
     resetMetrics()
     setSendState(true)
+    showStage('globe')          // the animation is the globe's job
     document.getElementById('btn-replay').disabled = true
 
     const data = runSimulation({
@@ -338,6 +342,57 @@ function renderFeed() {
     m.textContent = mode
     m.className = 'sb-pill' + (mode === 'OFF' ? ' off' : mode === 'AUTOPILOT' ? ' auto' : '')
   }
+}
+
+// ─── Centre stage ──────────────────────────────────────────────────────────
+
+function renderCrossover() {
+  const host = document.getElementById('xo-chart')
+  if (!host) return
+  const s = summarize('30d')
+  host.innerHTML = crossoverSvg(s.byCity)
+  const leg = document.getElementById('xo-legend')
+  if (leg) leg.innerHTML = crossoverLegend()
+  const stat = document.getElementById('xo-stat')
+  if (stat && s.overall.n) {
+    stat.innerHTML = `<b>${(s.overall.winRate * 100).toFixed(0)}%</b>`
+                   + `<span>beat fibre · ${s.overall.n} requests</span>`
+  }
+}
+
+export function showStage(which) {
+  const stage = document.getElementById('stage')
+  const globe = document.getElementById('globe-container')
+  const xo    = document.getElementById('xo-view')
+  if (!stage || !globe || !xo) return
+
+  const onGlobe = which === 'globe'
+  stage.classList.toggle('show-globe', onGlobe)
+
+  // Set visibility with inline !important. Plain inline styles were being
+  // overridden here and the globe stayed visible over the chart; for the one
+  // interaction the whole demo hinges on, unambiguous beats elegant.
+  const setVis = (el, on) => {
+    if (!el) return
+    el.style.setProperty('opacity', on ? '1' : '0', 'important')
+    el.style.setProperty('pointer-events', on ? 'auto' : 'none', 'important')
+    el.style.setProperty('visibility', on ? 'visible' : 'hidden', 'important')
+  }
+  setVis(globe, onGlobe)
+  setVis(xo, !onGlobe)
+  // Globe-only furniture
+  ;['autopilot-panel', 'layer-controls', 'playback-controls']
+    .forEach(id => setVis(document.getElementById(id), onGlobe))
+
+  document.querySelectorAll('.stg').forEach(b =>
+    b.classList.toggle('active', b.dataset.stage === which))
+  if (!onGlobe) renderCrossover()
+}
+
+function initStage() {
+  document.querySelectorAll('.stg').forEach(b =>
+    b.addEventListener('click', () => showStage(b.dataset.stage)))
+  showStage('map')
 }
 
 function initShell() {

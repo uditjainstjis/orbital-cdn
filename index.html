@@ -11,8 +11,29 @@
 </head>
 <body>
   <div id="app">
-    <!-- Globe fills viewport -->
-    <div id="globe-container"></div>
+    <!-- Centre stage: the crossover chart by default, the 3D globe on demand.
+         Leading with the chart is deliberate — the globe is what every satellite
+         demo shows; the chart is the one thing only we can draw. -->
+    <div id="stage">
+      <div id="xo-view">
+        <div class="xo-head">
+          <div>
+            <div class="xo-eyebrow">Measured result</div>
+            <h2 class="xo-title">Where routing through orbit actually wins</h2>
+          </div>
+          <div class="xo-stat" id="xo-stat"></div>
+        </div>
+        <div id="xo-chart"></div>
+        <div id="xo-legend"></div>
+        <p class="xo-foot">
+          Rings are drawn at the <b>4,472 km</b> break-even distance published for a 550 km shell
+          (Chaudhry &amp; Yanikomeroglu, arXiv:2203.00154). We did not fit to it — the cities fall on
+          the correct side of the line on their own. Ovals, not circles: a true geodesic circle
+          distorts in this projection, and that distortion is left in.
+        </p>
+      </div>
+      <div id="globe-container"></div>
+    </div>
 
     <!-- Top bar -->
     <div id="topbar">
@@ -23,9 +44,13 @@
         <span class="badge badge-dc" id="dc-badge">4 DCs SUNLIT</span>
         <span class="badge badge-time" id="utc-clock">UTC 00:00:00</span>
         <span class="badge badge-adaptive" id="adaptive-badge"><i data-ic="target"></i> ADAPTIVE</span>
-        <button class="badge dash-open-btn" id="dash-btn"><i data-ic="chart"></i> Network Analytics</button>
+        <span id="stage-switch">
+          <button class="stg active" data-stage="map"><i data-ic="analytics" data-size="13"></i>Evidence</button>
+          <button class="stg" data-stage="globe"><i data-ic="globe" data-size="13"></i>Live 3D</button>
+        </span>
+        <button class="badge dash-open-btn" id="dash-btn"><i data-ic="chart"></i>Analytics</button>
         <button class="badge ap-open-btn" id="autopilot-btn"><i data-ic="satellite"></i> Autopilot</button>
-        <button class="badge insights-btn" id="insights-btn"><i data-ic="blueprint"></i> Architecture &amp; Insights</button>
+        <button class="badge insights-btn" id="insights-btn"><i data-ic="blueprint"></i> Architecture</button>
       </div>
     </div>
 

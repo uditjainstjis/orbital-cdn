@@ -547,3 +547,9 @@ to the spec's premise: observing removes 78 of 80 failures, forecasting the last
   > 
   > also you have to make a quick product demo video using remotion of not more that 90-95 seconds with smooth high paced animation also generate the script that we record along with the video the video should capture our complete idea and should depict our innovation
 
+- [2026-08-22 21:26]
+  > bro, i saw other 2 ppl having same earth and background design some projects around satellite thing same earth, we need to do something with UI, judges will have quick looks and if looked life another one then, where our is best idea, do needables u are set free for that
+
+- [2026-08-22 23:04]
+  > continue
+

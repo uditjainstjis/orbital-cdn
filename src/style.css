@@ -1,19 +1,26 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap');
 
 :root {
-  --bg:      #020408;
-  --surface: rgba(6,12,22,0.82);
-  --card:    rgba(10,18,32,0.9);
-  --border:  rgba(22,42,72,0.7);
-  --border2: rgba(0,212,255,0.15);
-  --cyan:    #00d4ff;
-  --green:   #10b981;
-  --purple:  #7c3aed;
-  --amber:   #f59e0b;
-  --red:     #ef4444;
-  --blue:    #3b82f6;
-  --text:    #e2e8f0;
-  --muted:   #4a5f7a;
+  /* Flight-instrument palette, deliberately not the cyan-on-black that every
+     other satellite demo ships. Warm graphite ground, signal amber as the one
+     saturated accent, and green/red reserved strictly for MEASURED outcomes so
+     colour always means something. */
+  --bg:      #0b0c0f;
+  --surface: rgba(19,21,26,0.86);
+  --card:    rgba(21,23,29,0.92);
+  --border:  rgba(255,255,255,0.085);
+  --border2: rgba(255,158,61,0.20);
+
+  --cyan:    #ff9e3d;   /* primary signal — the accent, historically cyan */
+  --amber:   #ffd166;   /* solar / data-centre                            */
+  --green:   #4ade80;   /* measured good                                  */
+  --red:     #ff6b6b;   /* measured bad                                   */
+  --purple:  #9d8df1;   /* adaptation / agent                             */
+  --blue:    #6ea8fe;   /* gateways                                       */
+
+  --text:    #ecebe8;
+  --muted:   #7c8493;
+  --rule:    rgba(255,255,255,0.055);
 }
 
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
@@ -1694,9 +1701,9 @@ html, body {
   padding: 6px 10px; font-size: 10px; line-height: 1;
 }
 .top-badges .badge .ic { opacity: .85; }
-@media (max-width: 1400px) {
-  .badge-time, .badge-dc { display: none; }
-}
+@media (max-width: 1620px) { .badge-dc { display: none; } }
+@media (max-width: 1480px) { .badge-time { display: none; } }
+@media (max-width: 1360px) { .badge-sats { display: none; } }
 
 /* City buttons carry a country chip rather than a flag emoji */
 .city-btn { display: flex !important; align-items: center; gap: 0; }
@@ -1731,4 +1738,119 @@ html, body {
 @media (max-width: 1180px) {
   #globe-container { left: 0; width: 100%; }
   #playback-controls { left: 50% !important; }
+}
+
+/* ─── Instrument treatment ────────────────────────────────────────────────── */
+/* Less bloom, more structure. Glow reads as a game; hairlines and tick marks
+   read as test equipment, which is what the numbers deserve. */
+
+.glass-panel {
+  backdrop-filter: blur(16px) saturate(1.05);
+  box-shadow: 0 18px 48px rgba(0,0,0,0.5);
+}
+
+/* Corner ticks — cheap, and instantly signals "instrument" rather than "app" */
+#panel-left::before, #panel-right::before, #autopilot-panel::before,
+#panel-left::after,  #panel-right::after,  #autopilot-panel::after {
+  content: ''; position: absolute; width: 9px; height: 9px; pointer-events: none;
+  border-color: rgba(255,158,61,0.5); border-style: solid; border-width: 0;
+}
+#panel-left::before, #panel-right::before, #autopilot-panel::before {
+  top: -1px; left: -1px; border-top-width: 1px; border-left-width: 1px;
+}
+#panel-left::after, #panel-right::after, #autopilot-panel::after {
+  bottom: -1px; right: -1px; border-bottom-width: 1px; border-right-width: 1px;
+}
+
+/* Numerals should read as instrument readouts */
+.kpi-val, .metric-val, .idle-hero-num, .share-n, .share-x, .pen-row b,
+.dash-table td, .tl-lbl, .ap-fade { font-variant-numeric: tabular-nums; }
+
+/* Kill the sci-fi bloom on the badges */
+.badge { box-shadow: none !important; }
+.top-badges .badge { background: rgba(255,255,255,0.035); border-color: var(--border); }
+.badge-live { color: var(--green); border-color: rgba(74,222,128,0.35) !important; }
+.dash-open-btn {
+  background: rgba(255,158,61,0.1) !important; border-color: rgba(255,158,61,0.35) !important;
+  color: var(--cyan) !important;
+}
+.ap-open-btn {
+  background: rgba(157,141,241,0.12) !important; border-color: rgba(157,141,241,0.4) !important;
+  color: var(--purple) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CENTRE STAGE — crossover chart / 3D globe
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#stage { position: absolute; inset: 0; }
+/* Stage visibility is set in main.js showStage() — see the note there. */
+
+#globe-container { transition: opacity .45s ease, visibility .45s; }
+
+#xo-view {
+  position: absolute; left: 400px; right: 348px; top: 74px; bottom: 60px;
+  display: flex; flex-direction: column; gap: 14px;
+  transition: opacity .45s ease, visibility .45s; z-index: 5;
+}
+.xo-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 30px; }
+.xo-eyebrow {
+  font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.22em;
+  color: var(--cyan); text-transform: uppercase; margin-bottom: 7px;
+}
+.xo-title {
+  font-size: 27px; font-weight: 600; letter-spacing: -0.015em; color: #f6f5f2; line-height: 1.2;
+}
+.xo-stat { text-align: right; font-family: 'JetBrains Mono', monospace; }
+.xo-stat b { display: block; font-size: 34px; color: var(--green); line-height: 1; }
+.xo-stat span { font-size: 9.5px; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; }
+
+#xo-chart { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+.xo-svg { width: 100%; height: 100%; max-height: 100%; }
+.xo-grat line { stroke: var(--rule); stroke-width: 1; }
+.xo-land path { fill: rgba(255,255,255,0.045); stroke: rgba(255,255,255,0.14); stroke-width: 0.6; }
+.xo-city {
+  font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 600;
+  paint-order: stroke; stroke: var(--bg); stroke-width: 2.6px; stroke-linejoin: round;
+}
+.xo-region {
+  font-family: 'JetBrains Mono', monospace; font-size: 9px; fill: var(--muted);
+  letter-spacing: 0.08em;
+  paint-order: stroke; stroke: var(--bg); stroke-width: 2.4px;
+}
+
+.xo-legend {
+  display: flex; gap: 22px; flex-wrap: wrap; font-size: 10.5px; color: var(--muted);
+}
+.xo-legend span { display: inline-flex; align-items: center; gap: 7px; }
+.xo-legend b { color: var(--text); font-family: 'JetBrains Mono', monospace; }
+.xo-sw { width: 11px; height: 11px; border-radius: 3px; display: inline-block; flex: 0 0 auto; }
+.xo-ring { border: 1px dashed var(--muted); background: rgba(124,132,147,0.18); border-radius: 50%; }
+.xo-dia { border: 1px solid var(--blue); transform: rotate(45deg); width: 9px; height: 9px; border-radius: 1px; }
+
+.xo-foot { font-size: 10.5px; color: var(--muted); line-height: 1.6; max-width: 105ch; }
+.xo-foot b { color: #b9c2cf; font-family: 'JetBrains Mono', monospace; }
+
+#stage-switch {
+  display: inline-flex; gap: 3px; padding: 3px; border-radius: 9px; margin-right: 4px;
+  background: rgba(0,0,0,0.45); border: 1px solid var(--border); flex: 0 0 auto;
+}
+.stg {
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border: none; white-space: nowrap;
+  background: transparent; color: var(--muted); cursor: pointer; border-radius: 7px;
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.07em;
+  text-transform: uppercase; transition: all .15s;
+}
+.stg:hover { color: var(--text); }
+.stg.active { background: rgba(255,158,61,0.14); color: var(--cyan); box-shadow: inset 0 0 0 1px rgba(255,158,61,0.34); }
+
+#autopilot-panel, #layer-controls, #playback-controls { transition: opacity .35s ease, visibility .35s; }
+
+@media (max-width: 1400px) {
+  #xo-view { left: 372px; right: 20px; }
+  #stage-switch { right: 30px; }
+  .xo-foot { display: none; }
+}
+@media (max-width: 1180px) {
+  #xo-view { left: 20px; }
 }
