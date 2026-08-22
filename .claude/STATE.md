@@ -188,3 +188,38 @@ render on Windows Chrome) in favour of two-letter country chips.
 style recalc is throttled, so it reported opacity 1 on elements whose inline `!important` said
 0. Verify visual state with a screenshot, not a computed-style read. This is the third time
 background-tab throttling has produced a false negative in this project.
+
+---
+
+## Design pass — 2026-08-23 (commits fd04005, a452a51)
+
+**The palette is now a system and must stay one.** Five palettes had accumulated
+on top of each other (cyan/purple neon, tailwind, blue-slate, a partial amber
+retrofit) — ~100 colour literals with no rule behind them. Collapsed to:
+
+- **Ground** warm graphite `#0e0f12` → `#21242a`, five steps.
+- **One accent** brass `#d99a4e`. Brand, primary action, solar. The only hue that fills.
+- **Three semantics, measured outcomes only** — `#6fae7f` good, `#c9736b` bad, `#7d94b8` orbital/neutral.
+
+**Hard rules now in force:**
+- `src/palette.js` is the single source of hex for the three.js layer; `:root` mirrors it.
+  Edit both together. Nothing else may hardcode a colour.
+- **No gradients** except the ticker's `mask-image` edge fade (functional).
+- **No zero-offset coloured glows.** Depth is `--shadow-1/2/3`: offset plus blur.
+- **One selected state everywhere**: `--card-hi` + `--accent-line` hairline. Never
+  colour-code a set of tabs by item — the previous scheme painted "reliable" in the
+  same red this product uses for a measured failure.
+- Colour on a number is a claim it is good or bad. A request count is neither.
+- `--muted` is `#8d939d`, not `#7c8493` — the old value was 4.43:1 on card, under the floor.
+
+**Verification command** (must return nothing):
+`grep -rn "0,212,255\|124,58,237\|00d4ff\|00ff88\|7c3aed\|f59e0b\|ef4444\|10b981\|deepskyblue" src/ index.html`
+
+**Pitch deck:** `docs/ORBITAL_CDN_DECK.md` (mirrored to Desktop). 10 slides for
+Genspark. Grounded in the paper's own tables plus third-party announcements
+searched 2026-08-23 — SpaceX's Jan 30 2026 FCC filing for a million-satellite
+compute constellation, Google Suncatcher, Starcloud's H100 in orbit and $250M
+Aug 2026 raise, Bezos on gigawatt orbital DCs, China's Three-Body constellation.
+The deck's argument: everyone is building supply, the standard objection to all
+of it is "orbit suits training, not latency-sensitive inference," and that
+objection is a routing problem — which is this project.
