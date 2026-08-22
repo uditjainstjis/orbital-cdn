@@ -299,13 +299,13 @@ score = <span class="val">${w.lat}</span>·dist + <span class="val">${w.sol}</sp
     <div class="code-block" style="margin-bottom:12px"><span class="cmt">// Walker-Delta 53° incl., 6 planes × 12 sats · cross-plane ISL disabled |lat|>60°</span>
 <span class="cmt">// Total hops: ${d.nHops + 2} · SAA crossings: ${d.saaCross}</span></div>
     <div>${[
-      { label: 'User',      dot: '#fff',     val: `${d.city.city} (${d.city.lat.toFixed(1)}°, ${d.city.lon.toFixed(1)}°)`,       note: 'Origin' },
-      { label: 'Uplink',   dot: '#00d4ff',  val: `SAT-${d.uplink.id} @ ${d.uplink.lat.toFixed(1)}°, ${d.uplink.lon.toFixed(1)}°`, note: d.uplink.inSAA ? '<i data-ic="warning"></i> near SAA' : 'clear' },
-      ...d.hopSats.map((h, i) => ({ label: `Relay ${i + 1}`, dot: '#00ff88', val: `${h.lat.toFixed(1)}°, ${h.lon.toFixed(1)}°`, note: h.inSAA ? '<i data-ic="warning"></i> SAA' : 'clear' })),
-      { label: 'Orb DC',   dot: '#f59e0b',  val: `${d.dc.dcName} @ ${d.dc.lat.toFixed(1)}°, ${d.dc.lon.toFixed(1)}°`,           note: d.dc.eclipsed ? '<i data-ic="eclipse"></i> Eclipse' : '<i data-ic="sun"></i> Sunlit' },
-      ...d.hopSats.slice().reverse().map((h, i) => ({ label: `Relay ${d.nHops - i}`, dot: '#00ff88', val: `${h.lat.toFixed(1)}°, ${h.lon.toFixed(1)}°`, note: 'return path' })),
-      { label: 'GW Sat',   dot: '#00d4ff',  val: `SAT-${d.gwSat.id} @ ${d.gwSat.lat.toFixed(1)}°, ${d.gwSat.lon.toFixed(1)}°`,  note: 'downlink node' },
-      { label: 'Gateway',  dot: '#10b981',  val: `${d.gw.name} (${d.gw.lat.toFixed(1)}°, ${d.gw.lon.toFixed(1)}°)`,              note: d.gw.weather },
+      { label: 'User',      dot: '#e9e7e4',     val: `${d.city.city} (${d.city.lat.toFixed(1)}°, ${d.city.lon.toFixed(1)}°)`,       note: 'Origin' },
+      { label: 'Uplink',   dot: '#7d94b8',  val: `SAT-${d.uplink.id} @ ${d.uplink.lat.toFixed(1)}°, ${d.uplink.lon.toFixed(1)}°`, note: d.uplink.inSAA ? '<i data-ic="warning"></i> near SAA' : 'clear' },
+      ...d.hopSats.map((h, i) => ({ label: `Relay ${i + 1}`, dot: '#6fae7f', val: `${h.lat.toFixed(1)}°, ${h.lon.toFixed(1)}°`, note: h.inSAA ? '<i data-ic="warning"></i> SAA' : 'clear' })),
+      { label: 'Orb DC',   dot: '#d99a4e',  val: `${d.dc.dcName} @ ${d.dc.lat.toFixed(1)}°, ${d.dc.lon.toFixed(1)}°`,           note: d.dc.eclipsed ? '<i data-ic="eclipse"></i> Eclipse' : '<i data-ic="sun"></i> Sunlit' },
+      ...d.hopSats.slice().reverse().map((h, i) => ({ label: `Relay ${d.nHops - i}`, dot: '#6fae7f', val: `${h.lat.toFixed(1)}°, ${h.lon.toFixed(1)}°`, note: 'return path' })),
+      { label: 'GW Sat',   dot: '#7d94b8',  val: `SAT-${d.gwSat.id} @ ${d.gwSat.lat.toFixed(1)}°, ${d.gwSat.lon.toFixed(1)}°`,  note: 'downlink node' },
+      { label: 'Gateway',  dot: '#6fae7f',  val: `${d.gw.name} (${d.gw.lat.toFixed(1)}°, ${d.gw.lon.toFixed(1)}°)`,              note: d.gw.weather },
     ].map(h => `
       <div class="hop-row">
         <div class="hop-dot" style="background:${h.dot}"></div>

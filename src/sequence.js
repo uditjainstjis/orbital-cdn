@@ -86,9 +86,9 @@ export async function runSequence(data, world) {
   pov(city.lat, city.lon, 1.4, 1800)
   await sleep(400)
   _addDecision({
-    icon: '<i data-ic="origin"></i>', bg: 'rgba(0,212,255,0.15)', title: 'Origin Locked',
+    icon: '<i data-ic="origin"></i>', bg: 'rgba(125,148,184,0.15)', title: 'Origin Locked',
     body: `Request originates from <b>${city.city}</b> (${city.lat.toFixed(1)}°, ${city.lon.toFixed(1)}°). Ground terminal elevation mask ≥ 25°.`,
-    hl: `${city.city} → Orbital CDN network`, hlColor: '#00d4ff',
+    hl: `${city.city} → Orbital CDN network`, hlColor: '#7d94b8',
     step: 1,
   })
   await sleep(1800)
@@ -102,14 +102,14 @@ export async function runSequence(data, world) {
   addArc({
     startLat: city.lat, startLng: city.lon,
     endLat: uplink.lat, endLng: uplink.lon,
-    color: '#00d4ff', alt: 0.18, animate: 1800,
+    color: '#7d94b8', alt: 0.18, animate: 1800,
   })
 
   _addDecision({
-    icon: '<i data-ic="antenna"></i>', bg: 'rgba(0,212,255,0.15)', title: 'Uplink Satellite Selected',
+    icon: '<i data-ic="antenna"></i>', bg: 'rgba(125,148,184,0.15)', title: 'Uplink Satellite Selected',
     body: `Nearest satellite to <b>${city.city}</b> above 25° elevation mask. Vacuum laser: <b>c = 299,792 km/s</b> — 40% faster than fiber.`,
     hl: `SAT-${uplink.id} @ ${uplink.lat.toFixed(1)}°, ${uplink.lon.toFixed(1)}° ${uplink.inSAA ? '<i data-ic="warning"></i> near SAA' : ''}`,
-    hlColor: '#00d4ff', step: 2,
+    hlColor: '#7d94b8', step: 2,
   })
   await sleep(2200)
 
@@ -131,7 +131,7 @@ export async function runSequence(data, world) {
     icon: '<i data-ic="satellite"></i>', bg: 'rgba(245,158,11,0.15)', title: `Orbital DC Selected: ${dc.dcName}`,
     body: dcNote + ` Battery SoC ${(dc.battery * 100).toFixed(0)}%. Winning cost <b>${(+dc.cost).toFixed(1)} ms</b> of latency-equivalent penalty, against ${data.allDCs.length - 1} alternatives.`,
     hl: dc.eclipsed ? '<i data-ic="eclipse"></i> ECLIPSED — battery drain active' : '<i data-ic="sun"></i> SUNLIT — solar powered',
-    hlColor: dc.eclipsed ? '#ef4444' : '#f59e0b', step: 3,
+    hlColor: dc.eclipsed ? '#c9736b' : '#d99a4e', step: 3,
   })
   await sleep(3200)
 
@@ -143,7 +143,7 @@ export async function runSequence(data, world) {
   addArc({
     startLat: uplink.lat, startLng: uplink.lon,
     endLat: hopSats[0].lat, endLng: hopSats[0].lon,
-    color: '#00ff88', alt: 0.25, animate: 1400,
+    color: '#6fae7f', alt: 0.25, animate: 1400,
   })
   await sleep(1400)
 
@@ -156,7 +156,7 @@ export async function runSequence(data, world) {
     addArc({
       startLat: hopSats[i].lat,    startLng: hopSats[i].lon,
       endLat:   hopSats[i+1].lat,  endLng:   hopSats[i+1].lon,
-      color: hopSats[i].inSAA ? '#ef4444' : '#00ff88',
+      color: hopSats[i].inSAA ? '#c9736b' : '#6fae7f',
       alt: 0.28, animate: 1200,
     })
     await sleep(1200)
@@ -168,7 +168,7 @@ export async function runSequence(data, world) {
   addArc({
     startLat: lastHop.lat, startLng: lastHop.lon,
     endLat: dc.lat, endLng: dc.lon,
-    color: '#f59e0b', alt: 0.25, animate: 1300,
+    color: '#d99a4e', alt: 0.25, animate: 1300,
   })
   await sleep(700)
 
@@ -180,7 +180,7 @@ export async function runSequence(data, world) {
         ? `SAA-crossing hops detected (${saaCross}) — rerouting around radiation zone.`
         : `Path minimises energy + SAA exposure. Cross-plane ISLs disabled above |lat| 60° (pole instability).`,
     hl: `100 Gbps laser ISL · ${saaCross} SAA crossing${saaCross !== 1 ? 's' : ''} ${policy !== 'latency' && saaCross === 0 ? 'avoided <i data-ic="check" data-size="12"></i>' : ''}`,
-    hlColor: '#00ff88', step: 4,
+    hlColor: '#6fae7f', step: 4,
   })
   await sleep(600)
 
@@ -189,10 +189,10 @@ export async function runSequence(data, world) {
   pov(dc.lat, dc.lon, 0.6, 1500)
   await sleep(1500)
   _addDecision({
-    icon: '<i data-ic="server"></i>', bg: 'rgba(124,58,237,0.15)', title: `Computing at ${dc.dcName}`,
+    icon: '<i data-ic="server"></i>', bg: 'rgba(217,154,78,0.14)', title: `Computing at ${dc.dcName}`,
     body: `Processing <b>${data.service.service}</b> (${data.service.size}) — ${procMs} ms inference delay.${dc.eclipsed ? ' Running on battery — eclipse active.' : ' Powered by direct solar radiation.'}`,
     hl: `T_proc = ${procMs} ms · ${dc.eclipsed ? '<i data-ic="battery"></i> Battery SoC ' + (dc.battery * 100).toFixed(0) + '%' : '<i data-ic="sun"></i> Solar 100%'}`,
-    hlColor: '#7c3aed', step: 5,
+    hlColor: '#d99a4e', step: 5,
   })
   await sleep(1800)
 
@@ -224,7 +224,7 @@ export async function runSequence(data, world) {
 
     _setTicker(`<i data-ic="brain"></i> Applying ${p.sampleN} requests of observed history to this route…`)
     _addDecision({
-      icon: '<i data-ic="brain"></i>', bg: 'rgba(124,58,237,0.16)', title: 'Adaptation Applied',
+      icon: '<i data-ic="brain"></i>', bg: 'rgba(125,148,184,0.16)', title: 'Adaptation Applied',
       body: `Learned from <b>${p.sampleN}</b> logged requests. `
           + (avoided
               ? `<b>${worstGw[0]}</b> carries a <b>${worstGw[1].toFixed(2)}</b> observed rain-fade penalty, so it was down-weighted; <b>${gw.name}</b> won instead (penalty ${gwPen.toFixed(2)}).`
@@ -235,7 +235,7 @@ export async function runSequence(data, world) {
       hl: recommend && recommend !== policy
             ? `Recommendation: try ${recommend} for ${city.city}`
             : `History confirmed the ${policy} choice`,
-      hlColor: '#a78bfa', step: 7,
+      hlColor: '#7d94b8', step: 7,
     })
     await sleep(2600)
   }
@@ -248,14 +248,14 @@ export async function runSequence(data, world) {
   addArc({
     startLat: dc.lat, startLng: dc.lon,
     endLat: gwSat.lat, endLng: gwSat.lon,
-    color: '#f59e0b', alt: 0.3, animate: 1400,
+    color: '#d99a4e', alt: 0.3, animate: 1400,
   })
   await sleep(1400)
 
   addArc({
     startLat: gwSat.lat, startLng: gwSat.lon,
     endLat: gw.lat, endLng: gw.lon,
-    color: '#10b981', alt: 0.12, animate: 1000,
+    color: '#6fae7f', alt: 0.12, animate: 1000,
   })
   await sleep(600)
 
@@ -276,10 +276,10 @@ export async function runSequence(data, world) {
   const saving       = (propDelayFib - propDelayVac).toFixed(1)
 
   _addDecision({
-    icon: '<i data-ic="check"></i>', bg: 'rgba(0,212,255,0.12)', title: 'Request Complete',
+    icon: '<i data-ic="check"></i>', bg: 'rgba(111,174,127,0.14)', title: 'Request Complete',
     body: `Processed at ${dc.dcName}. Returned via ${gw.name}. Vacuum ISL saved ~${saving} ms vs terrestrial fiber.`,
     hl: `RTT ${rtt} ms · ${stretch <= 0 ? `${Math.abs(stretch)}% faster than fibre` : `${stretch}% slower than fibre`} · ${dc.eclipsed ? '<i data-ic="battery"></i> Battery' : '<i data-ic="sun"></i> Solar'}`,
-    hlColor: '#00d4ff', step: 8,
+    hlColor: '#7d94b8', step: 8,
   })
 
   await sleep(500)

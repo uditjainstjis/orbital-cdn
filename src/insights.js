@@ -6,7 +6,6 @@ const SECTIONS = [
     icon: '<i data-ic="logo"></i>',
     label: 'System Overview',
     render: () => `
-      <div class="ins-section-eyebrow">Architecture</div>
       <h2 class="ins-section-title">Orbital CDN — "Cloudflare for Space"</h2>
       <p class="ins-section-sub">
         A three-tier infrastructure that routes requests through Low Earth Orbit satellites instead of terrestrial fiber,
@@ -72,7 +71,6 @@ const SECTIONS = [
     icon: '<i data-ic="bolt"></i>',
     label: 'Physics of Speed',
     render: () => `
-      <div class="ins-section-eyebrow">Fundamental Advantage</div>
       <h2 class="ins-section-title">Why Vacuum Beats Fiber</h2>
       <p class="ins-section-sub">
         The core thesis of Orbital CDN is physical: the speed of light in a vacuum is 299,792 km/s,
@@ -167,7 +165,6 @@ const SECTIONS = [
     icon: '<i data-ic="balance"></i>',
     label: 'Routing Policies',
     render: () => `
-      <div class="ins-section-eyebrow">Policy Engine</div>
       <h2 class="ins-section-title">Four Adaptive Routing Policies</h2>
       <p class="ins-section-sub">
         The same cost function is re-weighted by policy to optimize for different operator goals.
@@ -242,7 +239,6 @@ const SECTIONS = [
     icon: '<i data-ic="target"></i>',
     label: 'Space Environment',
     render: () => `
-      <div class="ins-section-eyebrow">Hazards & Mitigation</div>
       <h2 class="ins-section-title">Radiation, SAA & Eclipse Models</h2>
       <p class="ins-section-sub">
         LEO infrastructure must contend with the Van Allen radiation belts, solar particle events, and eclipse power gaps.
@@ -260,7 +256,7 @@ const SECTIONS = [
       <div class="ins-steps">
         <div class="ins-step">
           <div class="ins-step-line">
-            <div class="ins-step-dot" style="background:rgba(239,68,68,.2);border:1px solid var(--red);color:var(--red)"><i data-ic="radiation"></i></div>
+            <div class="ins-step-dot" style="background:rgba(201,115,107,.18);border:1px solid var(--red);color:var(--red)"><i data-ic="radiation"></i></div>
             <div class="ins-step-connector"></div>
           </div>
           <div class="ins-step-body">
@@ -276,7 +272,7 @@ const SECTIONS = [
         </div>
         <div class="ins-step">
           <div class="ins-step-line">
-            <div class="ins-step-dot" style="background:rgba(16,185,129,.2);border:1px solid var(--green);color:var(--green)"><i data-ic="eclipse"></i></div>
+            <div class="ins-step-dot" style="background:rgba(111,174,127,.18);border:1px solid var(--green);color:var(--green)"><i data-ic="eclipse"></i></div>
             <div class="ins-step-connector"></div>
           </div>
           <div class="ins-step-body">
@@ -292,7 +288,7 @@ const SECTIONS = [
         </div>
         <div class="ins-step">
           <div class="ins-step-line">
-            <div class="ins-step-dot" style="background:rgba(245,158,11,.2);border:1px solid var(--amber);color:var(--amber)"><i data-ic="sun"></i></div>
+            <div class="ins-step-dot" style="background:rgba(217,154,78,.18);border:1px solid var(--amber);color:var(--amber)"><i data-ic="sun"></i></div>
             <div class="ins-step-connector"></div>
           </div>
           <div class="ins-step-body">
@@ -307,7 +303,7 @@ const SECTIONS = [
         </div>
         <div class="ins-step">
           <div class="ins-step-line">
-            <div class="ins-step-dot" style="background:rgba(0,212,255,.2);border:1px solid var(--cyan);color:var(--cyan)"><i data-ic="antenna"></i></div>
+            <div class="ins-step-dot" style="background:rgba(125,148,184,.18);border:1px solid var(--cyan);color:var(--cyan)"><i data-ic="antenna"></i></div>
           </div>
           <div class="ins-step-body">
             <div class="ins-step-title">Atomic Oxygen Erosion</div>
@@ -328,7 +324,6 @@ const SECTIONS = [
     icon: '<i data-ic="globe"></i>',
     label: 'Site Diversity',
     render: () => `
-      <div class="ins-section-eyebrow">Ground Infrastructure</div>
       <h2 class="ins-section-title">Gateway Site Diversity & Weather Resilience</h2>
       <p class="ins-section-sub">
         Eight global gateways provide geographic diversity against weather outages and regional power failures.
@@ -433,7 +428,6 @@ const SECTIONS = [
     icon: '<i data-ic="book"></i>',
     label: 'References',
     render: () => `
-      <div class="ins-section-eyebrow">Research & Standards</div>
       <h2 class="ins-section-title">Academic & Technical References</h2>
       <p class="ins-section-sub">
         Orbital CDN draws on published research in satellite networking, atmospheric physics,

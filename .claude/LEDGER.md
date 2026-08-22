@@ -587,3 +587,6 @@ Only the ledger was dirty; committed it.
 Udit, verbatim: *"get this skill https://github.com/pbakaus/impeccable"*
 Installed v4.1.1 project-level (skill + 4 agents). Hooks NOT enabled — they run node on every
 Edit/Write and every Stop; left as an opt-in. Vendored copy gitignored.
+- [2026-08-23 01:03]
+  > change the UI to look clean and professional, avoid using loud "neon" colours, avoid gradients, and in all, use the impeccable skill to give the website a professional look
+

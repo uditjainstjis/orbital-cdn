@@ -61,7 +61,7 @@ function chartTraffic(series, bucket) {
 
   const bars = series.map((s, i) => {
     const h = s.n ? Math.max(2, PT + ih - yN(s.n)) : 0
-    return `<rect x="${(x(i) - bw / 2).toFixed(1)}" y="${(PT + ih - h).toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="url(#dashBar)"${s.partial ? ' opacity="0.4" stroke="rgba(0,212,255,0.35)" stroke-dasharray="2 2"' : ''}>
+    return `<rect x="${(x(i) - bw / 2).toFixed(1)}" y="${(PT + ih - h).toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="rgba(125,148,184,0.55)"${s.partial ? ' opacity="0.4" stroke="rgba(125,148,184,0.45)" stroke-dasharray="2 2"' : ''}>
       <title>${fmtTick(s.t, bucket)} — ${s.n} requests${s.partial ? ' (partial bucket — clipped by the window edge)' : ''}</title></rect>`
   }).join('')
 
@@ -87,23 +87,17 @@ function chartTraffic(series, bucket) {
 
   return `
   <svg viewBox="0 0 ${W} ${H}" class="dash-svg" preserveAspectRatio="xMidYMid meet">
-    <defs>
-      <linearGradient id="dashBar" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%"   stop-color="#00d4ff" stop-opacity="0.75"/>
-        <stop offset="100%" stop-color="#00d4ff" stop-opacity="0.14"/>
-      </linearGradient>
-    </defs>
     ${gridY}${bars}
-    ${p95Line ? `<polyline points="${p95Line}" fill="none" stroke="#ef4444" stroke-width="1.6" stroke-dasharray="4 3" opacity="0.85"/>` : ''}
-    ${p50Line ? `<polyline points="${p50Line}" fill="none" stroke="#f59e0b" stroke-width="2.2"/>` : ''}
+    ${p95Line ? `<polyline points="${p95Line}" fill="none" stroke="#c9736b" stroke-width="1.6" stroke-dasharray="4 3" opacity="0.85"/>` : ''}
+    ${p50Line ? `<polyline points="${p50Line}" fill="none" stroke="#d99a4e" stroke-width="2.2"/>` : ''}
     ${ticks}
     <text x="${PL - 8}" y="${PT - 6}" class="ax-title" text-anchor="end">REQS</text>
     <text x="${W - PR + 8}" y="${PT - 6}" class="ax-title">ms</text>
   </svg>
   <div class="dash-legend">
-    <span><i class="sw" style="background:#00d4ff"></i>Requests</span>
-    <span><i class="sw" style="background:#f59e0b"></i>p50 RTT</span>
-    <span><i class="sw sw-d" style="background:#ef4444"></i>p95 RTT</span>
+    <span><i class="sw" style="background:#7d94b8"></i>Requests</span>
+    <span><i class="sw" style="background:#d99a4e"></i>p50 RTT</span>
+    <span><i class="sw sw-d" style="background:#c9736b"></i>p95 RTT</span>
     ${series.some(s => s.partial) ? '<span style="opacity:.7">faded bars = partial bucket at the window edge</span>' : ''}
   </div>`
 }
@@ -114,7 +108,7 @@ function chartShare(rows, total, color) {
   return `<div class="share-list">` + rows.map(r => `
     <div class="share-row">
       <span class="share-key">${r.key}</span>
-      <div class="share-track"><div class="share-fill" style="width:${total ? (r.n / total) * 100 : 0}%;background:${color}"></div></div>
+      <div class="share-track"><div class="share-fill" style="width:${total ? (r.n / total) * 100 : 0}%;background:${color};opacity:.72"></div></div>
       <span class="share-n">${r.n}</span>
       <span class="share-x">${r.p50 ? ms(r.p50) : '—'}</span>
     </div>`).join('') + `</div>`
@@ -129,7 +123,7 @@ function chartWinRate(rows) {
     return `
     <div class="share-row win-row">
       <span class="share-key">${r.key}</span>
-      <div class="share-track"><div class="share-fill" style="width:${r.winRate * 100}%;background:${col}"></div></div>
+      <div class="share-track"><div class="share-fill" style="width:${r.winRate * 100}%;background:${col};opacity:.72"></div></div>
       <span class="share-n" style="color:${col}">${pct(r.winRate)}</span>
       <span class="share-x">${r.savedMs >= 1 ? '−' + ms(r.savedMs) : '—'}</span>
     </div>`
@@ -200,13 +194,17 @@ function groundingPanel(s) {
 // ─── Sections ──────────────────────────────────────────────────────────────
 
 function kpis(s) {
+  // Colour here is a claim that a number is good or bad. A request count is
+  // neither, and neither is a tail latency without a target to miss. Only the
+  // two figures that ARE a verdict — how much of the traffic ran on sunlight,
+  // and how much of it beat fibre — earn a hue; the rest read as plain type.
   const cards = [
-    { v: num(s.overall.n),        l: 'Requests served',   c: 'var(--cyan)'   },
-    { v: ms(s.overall.p50),       l: 'p50 end-to-end RTT',c: 'var(--amber)'  },
-    { v: ms(s.overall.p95),       l: 'p95 tail RTT',      c: 'var(--red)'    },
-    { v: pct(s.overall.solar),    l: 'Solar-served',      c: 'var(--green)'  },
-    { v: num(s.overall.saaTot),   l: 'SAA hops crossed',  c: 'var(--purple)' },
-    { v: pct(s.overall.winRate),  l: 'Beat fibre',        c: 'var(--blue)'   },
+    { v: num(s.overall.n),        l: 'Requests served',   c: 'var(--text)' },
+    { v: ms(s.overall.p50),       l: 'p50 end-to-end RTT',c: 'var(--text)' },
+    { v: ms(s.overall.p95),       l: 'p95 tail RTT',      c: 'var(--text)' },
+    { v: pct(s.overall.solar),    l: 'Solar-served',      c: 'var(--pos)'  },
+    { v: num(s.overall.saaTot),   l: 'SAA hops crossed',  c: 'var(--text)' },
+    { v: pct(s.overall.winRate),  l: 'Beat fibre',        c: 'var(--pos)'  },
   ]
   return `<div class="kpi-grid">` + cards.map(c => `
     <div class="kpi-card">
@@ -446,7 +444,7 @@ export function renderIdleSummary() {
     const col = r.winRate > 0.5 ? 'var(--green)' : 'var(--red)'
     return `<div class="idle-row">
       <span class="idle-key">${r.key}</span>
-      <div class="idle-track"><div class="idle-fill" style="width:${r.winRate * 100}%;background:${col}"></div></div>
+      <div class="idle-track"><div class="idle-fill" style="width:${r.winRate * 100}%;background:${col};opacity:.72"></div></div>
       <span class="idle-val" style="color:${col}">${pct(r.winRate)}</span>
     </div>`
   }

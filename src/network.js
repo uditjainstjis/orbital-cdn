@@ -120,9 +120,9 @@ export function initNetwork(world) {
     .htmlAltitude(0.005)
     .htmlElement(d => {
       const el   = document.createElement('div')
-      const col  = d.weather === 'clear'  ? '#10b981'
-                 : d.weather === 'rain'   ? '#ef4444'
-                 : '#f59e0b'
+      const col  = d.weather === 'clear'  ? '#6fae7f'
+                 : d.weather === 'rain'   ? '#c9736b'
+                 : '#d99a4e'
       el.className    = 'gw-marker'
       el.dataset.name = d.name
       el.style.cssText = `
@@ -156,7 +156,7 @@ export function initNetwork(world) {
     .pointLng(d => d.lon)
     .pointAltitude(0.0)
     .pointRadius(d => d.city === selectedCityName ? 0.55 : 0.3)
-    .pointColor(d => d.city === selectedCityName ? '#ffffff' : 'rgba(255,255,255,0.45)')
+    .pointColor(d => d.city === selectedCityName ? '#e9e7e4' : 'rgba(255,255,255,0.45)')
     .pointsMerge(false)
 }
 
@@ -172,5 +172,5 @@ export function toggleSAA(visible, world) {
 }
 
 export function gwWeatherColor(weather) {
-  return weather === 'clear' ? '#10b981' : weather === 'rain' ? '#ef4444' : '#f59e0b'
+  return weather === 'clear' ? '#6fae7f' : weather === 'rain' ? '#c9736b' : '#d99a4e'
 }

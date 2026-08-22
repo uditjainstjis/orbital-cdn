@@ -103,7 +103,7 @@ export function crossoverSvg(byCity = []) {
   // Break-even rings around each terrestrial cloud region
   const rings = TERRESTRIAL_ORIGINS.map(o => {
     const segs = geodesicCircle(o.lat, o.lon, CROSSOVER_KM)
-    const fills = segs.map(s => `<path d="${path(s)} Z" fill="url(#fibreZone)" opacity="0.55"/>`).join('')
+    const fills = segs.map(s => `<path d="${path(s)} Z" fill="rgba(255,255,255,0.035)"/>`).join('')
     const lines = segs.map(s => `<path d="${path(s)}" fill="none" stroke="var(--muted)"
       stroke-width="1.1" stroke-dasharray="5 4" opacity="0.85"/>`).join('')
     return fills + lines
@@ -144,13 +144,6 @@ export function crossoverSvg(byCity = []) {
 
   return `
   <svg viewBox="0 0 ${W} ${H}" class="xo-svg" preserveAspectRatio="xMidYMid meet">
-    <defs>
-      <radialGradient id="fibreZone">
-        <stop offset="0%"   stop-color="#7c8493" stop-opacity="0.34"/>
-        <stop offset="70%"  stop-color="#7c8493" stop-opacity="0.16"/>
-        <stop offset="100%" stop-color="#7c8493" stop-opacity="0.05"/>
-      </radialGradient>
-    </defs>
     <rect width="${W}" height="${H}" fill="rgba(255,255,255,0.012)"/>
     <g class="xo-grat">${graticule.join('')}</g>
     <g class="xo-land">${land}</g>

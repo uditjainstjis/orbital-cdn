@@ -17,7 +17,7 @@ export function initGlobe(container) {
     .bumpImageUrl(T.bump)
     .backgroundImageUrl(T.stars)
     .showAtmosphere(true)
-    .atmosphereColor('deepskyblue')
+    .atmosphereColor('#7d94b8')
     .atmosphereAltitude(0.22)
     (container)
 
@@ -73,7 +73,7 @@ export function initGlobe(container) {
         void main() {
           float rim  = 1.0 - max(0.0, dot(vNormal, vViewDir));
           float glow = pow(rim, 5.0) * 1.1;
-          gl_FragColor = vec4(0.18, 0.52, 1.0, glow * 0.65);
+          gl_FragColor = vec4(0.49, 0.58, 0.72, glow * 0.45);
         }
       `,
       transparent: true,
