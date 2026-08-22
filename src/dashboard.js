@@ -12,6 +12,7 @@ import {
 } from './telemetry.js'
 import { measuredFibre, modelledFibreMs, haversine, TERRESTRIAL_ORIGINS } from './engine.js'
 import { CITIES } from './network.js'
+import { PALETTE } from './palette.js'
 
 let currentWindow = '7d'
 let onDataChange  = () => {}
@@ -88,16 +89,16 @@ function chartTraffic(series, bucket) {
   return `
   <svg viewBox="0 0 ${W} ${H}" class="dash-svg" preserveAspectRatio="xMidYMid meet">
     ${gridY}${bars}
-    ${p95Line ? `<polyline points="${p95Line}" fill="none" stroke="#c9736b" stroke-width="1.6" stroke-dasharray="4 3" opacity="0.85"/>` : ''}
-    ${p50Line ? `<polyline points="${p50Line}" fill="none" stroke="#d99a4e" stroke-width="2.2"/>` : ''}
+    ${p95Line ? `<polyline points="${p95Line}" fill="none" stroke="${PALETTE.neg}" stroke-width="1.6" stroke-dasharray="4 3" opacity="0.85"/>` : ''}
+    ${p50Line ? `<polyline points="${p50Line}" fill="none" stroke="${PALETTE.accent}" stroke-width="2.2"/>` : ''}
     ${ticks}
     <text x="${PL - 8}" y="${PT - 6}" class="ax-title" text-anchor="end">REQS</text>
     <text x="${W - PR + 8}" y="${PT - 6}" class="ax-title">ms</text>
   </svg>
   <div class="dash-legend">
-    <span><i class="sw" style="background:#7d94b8"></i>Requests</span>
-    <span><i class="sw" style="background:#d99a4e"></i>p50 RTT</span>
-    <span><i class="sw sw-d" style="background:#c9736b"></i>p95 RTT</span>
+    <span><i class="sw" style="background:${PALETTE.info}"></i>Requests</span>
+    <span><i class="sw" style="background:${PALETTE.accent}"></i>p50 RTT</span>
+    <span><i class="sw sw-d" style="background:${PALETTE.neg}"></i>p95 RTT</span>
     ${series.some(s => s.partial) ? '<span style="opacity:.7">faded bars = partial bucket at the window edge</span>' : ''}
   </div>`
 }
@@ -435,15 +436,29 @@ export function renderIdleSummary() {
   const s = summarize('7d')
   if (!s.overall.n) return
 
+  // Show every origin, not a top-4 and a bottom-2. Slicing dropped exactly the
+  // rows that carry the argument: the cities at 65% and 75% are the crossover
+  // itself, and without them the panel is four full bars and two empty ones —
+  // a chart with no discriminating information. Distance is shown alongside
+  // because distance is the variable the whole thesis turns on.
+  const kmToRegion = name => {
+    const c = CITIES.find(x => x.city === name)
+    if (!c) return null
+    return TERRESTRIAL_ORIGINS.reduce((best, o) => {
+      const d = haversine(c.lat, c.lon, o.lat, o.lon)
+      return best === null || d < best ? d : best
+    }, null)
+  }
   const rank = [...s.byCity].filter(c => c.n >= 3).sort((a, b) => b.winRate - a.winRate)
-  const top  = rank.slice(0, 4)
-  const bot  = rank.slice(-2).reverse()
+  const wins = rank.filter(c => c.winRate > 0)
+  const loss = rank.filter(c => c.winRate === 0)
   const pol  = [...s.byPolicy].filter(p => p.n >= 20).sort((a, b) => a.p50 - b.p50)
 
   const row = (r) => {
-    const col = r.winRate > 0.5 ? 'var(--green)' : 'var(--red)'
+    const col = r.winRate > 0.5 ? 'var(--pos)' : r.winRate > 0 ? 'var(--accent)' : 'var(--neg)'
+    const km  = kmToRegion(r.key)
     return `<div class="idle-row">
-      <span class="idle-key">${r.key}</span>
+      <span class="idle-key">${r.key}${km ? ` <span class="idle-km">${Math.round(km).toLocaleString()} km</span>` : ''}</span>
       <div class="idle-track"><div class="idle-fill" style="width:${r.winRate * 100}%;background:${col};opacity:.72"></div></div>
       <span class="idle-val" style="color:${col}">${pct(r.winRate)}</span>
     </div>`
@@ -466,9 +481,9 @@ export function renderIdleSummary() {
       </div>
 
       <div class="idle-sec">Where orbital wins</div>
-      ${top.map(row).join('')}
+      ${wins.map(row).join('')}
       <div class="idle-sep">…and where it loses</div>
-      ${bot.map(row).join('')}
+      ${loss.map(row).join('')}
 
       ${pol.length ? `<div class="idle-sep">Fastest policy observed</div>
         <div class="idle-note"><b>${pol[0].key}</b> ${ms(pol[0].p50)} p50 · ${pol[0].n} reqs${

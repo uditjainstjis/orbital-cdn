@@ -1,5 +1,6 @@
 import Globe from 'globe.gl'
 import * as THREE from 'three'
+import { PALETTE } from './palette.js'
 
 // Textures bundled with three-globe (via unpkg)
 const T = {
@@ -11,13 +12,56 @@ const T = {
 
 let world, cloudMesh, atmMesh
 
+/**
+ * Recolour the Blue Marble into the instrument palette.
+ *
+ * Every satellite demo ships this exact texture — saturated blue oceans, tan
+ * land, a specular highlight and a starfield — and two other teams in this
+ * hackathon shipped it too. It is also the only surface here that had not
+ * followed the rest of the interface into warm graphite, so clicking LIVE 3D
+ * felt like leaving the product.
+ *
+ * Done in the fragment shader rather than on a canvas deliberately: the texture
+ * is served cross-origin from unpkg, so reading its pixels would taint the
+ * canvas and throw. Patching the shader needs no pixel access, costs nothing
+ * per frame, and keeps every coastline and mountain range the texture encodes —
+ * only the hue is replaced. Land still reads as land because the mapping is
+ * driven by luminance, which is what distinguishes ocean from continent from
+ * ice cap in the source image.
+ */
+function graphiteEarth(w) {
+  const mat = typeof w.globeMaterial === 'function' ? w.globeMaterial() : null
+  if (!mat) return
+
+  const rgb = h => {
+    const n = parseInt(h.slice(1), 16)
+    return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255]
+  }
+  const v3 = c => `vec3(${rgb(c).map(x => x.toFixed(4)).join(', ')})`
+
+  mat.onBeforeCompile = shader => {
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <map_fragment>',
+      `#include <map_fragment>
+       {
+         float l = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+         vec3 c = mix(${v3(PALETTE.bgDeep)}, ${v3(PALETTE.card)},  smoothstep(0.02, 0.20, l));
+         c      = mix(c, ${v3(PALETTE.terrain)},                          smoothstep(0.16, 0.44, l));
+         c      = mix(c, ${v3(PALETTE.terrainHi)},                          smoothstep(0.52, 0.86, l));
+         diffuseColor.rgb = c;
+       }`
+    )
+  }
+  mat.needsUpdate = true
+}
+
 export function initGlobe(container) {
   world = Globe()
     .globeImageUrl(T.day)
     .bumpImageUrl(T.bump)
-    .backgroundImageUrl(T.stars)
+    .backgroundColor(PALETTE.bgDeep)
     .showAtmosphere(true)
-    .atmosphereColor('#7d94b8')
+    .atmosphereColor(PALETTE.info)
     .atmosphereAltitude(0.22)
     (container)
 
@@ -32,6 +76,8 @@ export function initGlobe(container) {
 
   world.pointOfView({ lat: 18, lng: 15, altitude: 2.6 })
 
+  graphiteEarth(world)
+
   const scene = world.scene()
   const GLOBE_R = world.getGlobeRadius()
   const loader = new THREE.TextureLoader()
@@ -43,7 +89,7 @@ export function initGlobe(container) {
       new THREE.MeshPhongMaterial({
         map:         tex,
         transparent: true,
-        opacity:     0.28,
+        opacity:     0.10,
         depthWrite:  false,
       })
     )

@@ -1,3 +1,5 @@
+import { PALETTE } from './palette.js'
+
 // Ground network: gateways, cities, SAA zone
 // Gateways render via globe.gl htmlElementsData; SAA via polygonsData.
 
@@ -106,9 +108,9 @@ export function initNetwork(world) {
       type: 'Polygon',
       coordinates: [[...d.polygon]], // outer ring wrapped in coordinates array
     }))
-    .polygonCapColor(() => 'rgba(239,68,68,0.10)')
-    .polygonSideColor(() => 'rgba(239,68,68,0.05)')
-    .polygonStrokeColor(() => 'rgba(239,68,68,0.5)')
+    .polygonCapColor(() => 'rgba(201,115,107,0.10)')
+    .polygonSideColor(() => 'rgba(201,115,107,0.05)')
+    .polygonStrokeColor(() => 'rgba(201,115,107,0.45)')
     .polygonAltitude(0.018)
     .polygonLabel(() => '<i data-ic="warning"></i> South Atlantic Anomaly — inner Van Allen belt dips to ~200 km.<br/>Published extent 50°S–0°, 90°W–40°E (NASA GSFC). Fermi spends ~15% of its time inside it.')
 
@@ -120,16 +122,16 @@ export function initNetwork(world) {
     .htmlAltitude(0.005)
     .htmlElement(d => {
       const el   = document.createElement('div')
-      const col  = d.weather === 'clear'  ? '#6fae7f'
-                 : d.weather === 'rain'   ? '#c9736b'
-                 : '#d99a4e'
+      const col  = d.weather === 'clear'  ? PALETTE.pos
+                 : d.weather === 'rain'   ? PALETTE.neg
+                 : PALETTE.accent
       el.className    = 'gw-marker'
       el.dataset.name = d.name
       el.style.cssText = `
         width:12px; height:12px;
         background:${col};
         clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);
-        box-shadow:0 0 8px ${col};
+        box-shadow:0 1px 3px rgba(0,0,0,0.45);
         cursor:pointer;
         transition:transform .2s;
       `
@@ -156,7 +158,7 @@ export function initNetwork(world) {
     .pointLng(d => d.lon)
     .pointAltitude(0.0)
     .pointRadius(d => d.city === selectedCityName ? 0.55 : 0.3)
-    .pointColor(d => d.city === selectedCityName ? '#e9e7e4' : 'rgba(255,255,255,0.45)')
+    .pointColor(d => d.city === selectedCityName ? PALETTE.text : 'rgba(255,255,255,0.45)')
     .pointsMerge(false)
 }
 
@@ -172,5 +174,5 @@ export function toggleSAA(visible, world) {
 }
 
 export function gwWeatherColor(weather) {
-  return weather === 'clear' ? '#6fae7f' : weather === 'rain' ? '#c9736b' : '#d99a4e'
+  return weather === 'clear' ? PALETTE.pos : weather === 'rain' ? PALETTE.neg : PALETTE.accent
 }

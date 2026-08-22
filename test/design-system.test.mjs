@@ -10,7 +10,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, extname } from 'node:path'
-import { PALETTE, SEMANTIC } from '../src/palette.js'
+import { PALETTE, SEMANTIC, SCENE, hex, shade } from '../src/palette.js'
 
 const ROOT = new URL('..', import.meta.url).pathname
 
@@ -27,30 +27,81 @@ const rel = p => p.slice(ROOT.length)
 
 // ─── Retired palettes must stay retired ─────────────────────────────────────
 
+// Each retired colour is listed ONCE, as hex, and matched in both notations.
+// The first version of this test listed some colours as hex and others as bare
+// comma triples, and matched by substring — so seven survivors written as
+// `rgba(239, 68, 68, .5)` passed clean. A guard that only catches the spelling
+// you happened to think of is worse than no guard, because it reports success.
 const RETIRED = {
-  '0,212,255':   'legacy neon cyan',
-  '124,58,237':  'legacy purple',
-  '00d4ff':      'legacy neon cyan',
-  '00ff88':      'legacy neon green',
-  '7c3aed':      'legacy purple',
-  'f59e0b':      'tailwind amber',
-  'ef4444':      'tailwind red',
-  '10b981':      'tailwind emerald',
-  '4ade80':      'tailwind green',
-  'deepskyblue': 'a browser colour keyword, which is not a decision',
+  '00d4ff': 'legacy neon cyan',
+  '00ff88': 'legacy neon green',
+  '7c3aed': 'legacy purple',
+  '9d8df1': 'legacy violet',
+  'a78bfa': 'legacy violet',
+  'f59e0b': 'tailwind amber',
+  'ef4444': 'tailwind red',
+  'f87171': 'tailwind red',
+  '10b981': 'tailwind emerald',
+  '4ade80': 'tailwind green',
+  '6ee7b7': 'tailwind emerald',
+  'fcd34d': 'tailwind yellow',
+  'c4b5fd': 'tailwind violet',
+  '6ea8fe': 'legacy blue',
+  'ff6b6b': 'legacy red',
+  'ff9e3d': 'interim amber',
 }
 
-test('no retired palette literal survives anywhere in src', () => {
+/** Both spellings of one colour: `#aabbcc` and `rgb(170, 187, 204)`. */
+function patternsFor(hex) {
+  const [r, g, b] = [0, 2, 4].map(i => parseInt(hex.slice(i, i + 2), 16))
+  return [
+    new RegExp(hex, 'i'),
+    new RegExp(`\\b${r}\\s*,\\s*${g}\\s*,\\s*${b}\\b`),
+  ]
+}
+
+test('no retired palette literal survives, in hex or in rgb() notation', () => {
   const hits = []
   for (const f of FILES) {
-    const lines = readFileSync(f, 'utf8').split('\n')
-    lines.forEach((line, i) => {
-      for (const [lit, why] of Object.entries(RETIRED)) {
-        if (line.includes(lit)) hits.push(`${rel(f)}:${i + 1}  ${lit} (${why})`)
+    readFileSync(f, 'utf8').split('\n').forEach((line, i) => {
+      for (const [hex, why] of Object.entries(RETIRED)) {
+        for (const re of patternsFor(hex)) {
+          if (re.test(line)) { hits.push(`${rel(f)}:${i + 1}  ${hex} (${why})`); break }
+        }
       }
     })
   }
   assert.deepEqual(hits, [], `retired colours reappeared:\n  ${hits.join('\n  ')}`)
+})
+
+test('every colour literal in the codebase is a palette value', () => {
+  // A colour that is not retired is not therefore approved. This catches the
+  // next off-palette near-white before it becomes a sixth palette.
+  const allowed = new Set([...Object.values(PALETTE).map(c => c.slice(1).toLowerCase()),
+                           '000', 'fff', '000000', 'ffffff'])
+  const hits = []
+  for (const f of FILES) {
+    readFileSync(f, 'utf8').split('\n').forEach((line, i) => {
+      for (const m of line.matchAll(/#([0-9a-fA-F]{6})\b/g)) {
+        if (!allowed.has(m[1].toLowerCase())) hits.push(`${rel(f)}:${i + 1}  #${m[1]}`)
+      }
+    })
+  }
+  assert.deepEqual(hits, [], `off-palette colours:\n  ${hits.join('\n  ')}`)
+})
+
+test('no zero-offset coloured glow hides in a JavaScript template string', () => {
+  // The CSS rule below only reads style.css. Eight glows lived in network.js,
+  // written into an inline style, and went unnoticed for exactly that reason.
+  const hits = []
+  for (const f of FILES.filter(x => x.endsWith('.js'))) {
+    readFileSync(f, 'utf8').split('\n').forEach((line, i) => {
+      if (/box-shadow:\s*0\s+0\s+\d/.test(line) && !line.includes('inset')) {
+        hits.push(`${rel(f)}:${i + 1}  ${line.trim().slice(0, 80)}`)
+      }
+    })
+  }
+  assert.deepEqual(hits, [], `glows in JS:\n  ${hits.join('\n  ')}`)
 })
 
 // ─── Gradients ──────────────────────────────────────────────────────────────
@@ -130,7 +181,7 @@ const contrast = (a, b) => {
 }
 
 test('body text steps clear WCAG AA on the card surface', () => {
-  for (const key of ['text', 'text2', 'muted']) {
+  for (const key of ['text', 'text2', 'muted', 'faint']) {
     const ratio = contrast(PALETTE[key], PALETTE.card)
     assert.ok(ratio >= 4.5,
       `--${key} (${PALETTE[key]}) is ${ratio.toFixed(2)}:1 on --card, below the 4.5:1 floor`)
@@ -174,4 +225,41 @@ test('no kicker or eyebrow label sits above a heading', () => {
     })
   }
   assert.deepEqual(hits, [], `kickers reappeared at:\n  ${hits.join('\n  ')}`)
+})
+
+
+// ─── The palette must actually be imported, not merely maintained ───────────
+
+test('palette.js is imported by every module that renders a colour', () => {
+  const renderers = ['sats.js', 'globe.js', 'network.js', 'sequence.js', 'ui.js', 'dashboard.js']
+  const missing = renderers.filter(name => {
+    const src = readFileSync(join(ROOT, 'src', name), 'utf8')
+    return !/from '\.\/palette\.js'/.test(src)
+  })
+  assert.deepEqual(missing, [],
+    `these render colours without importing the palette: ${missing.join(', ')}`)
+})
+
+test('no three.js colour integer is typed by hand outside palette.js', () => {
+  // The CSS and hex sweeps cannot see `0xd99a4e`. The globe is the largest
+  // painted area on screen and was the last thing to leave the old palette.
+  const hits = []
+  for (const f of FILES.filter(x => x.endsWith('.js') && !x.endsWith('palette.js'))) {
+    readFileSync(f, 'utf8').split('\n').forEach((line, i) => {
+      for (const m of line.matchAll(/0x[0-9a-fA-F]{6}\b/g)) hits.push(`${rel(f)}:${i + 1}  ${m[0]}`)
+    })
+  }
+  assert.deepEqual(hits, [], `hand-typed scene colours:\n  ${hits.join('\n  ')}`)
+})
+
+test('every scene colour derives from a palette token', () => {
+  const derived = new Set()
+  for (const c of Object.values(PALETTE)) {
+    derived.add(hex(c))
+    for (let k = 0.40; k <= 0.76; k += 0.01) derived.add(shade(c, Math.round(k * 100) / 100))
+  }
+  for (const [role, value] of Object.entries(SCENE)) {
+    assert.ok(derived.has(value),
+      `SCENE.${role} = 0x${value.toString(16)} is not a palette token or a shade of one`)
+  }
 })

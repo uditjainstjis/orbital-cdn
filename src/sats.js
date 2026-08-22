@@ -1,5 +1,6 @@
 import * as satellite from 'satellite.js'
 import * as THREE from 'three'
+import { SCENE } from './palette.js'
 
 export const PLANES = 9
 export const SATS_PER_PLANE = 20
@@ -73,12 +74,12 @@ function _buildMeshes(scene, world) {
       // ── Orbital DC: large bus + big solar wings + ring + aura ──────────────
       const bodyMesh = new THREE.Mesh(
         new THREE.BoxGeometry(4.2, 1.8, 1.8),
-        new THREE.MeshBasicMaterial({ color: 0xd99a4e })
+        new THREE.MeshBasicMaterial({ color: SCENE.dcBody })
       )
       group.add(bodyMesh)
 
       const pGeo = new THREE.PlaneGeometry(6.0, 1.65)
-      const pMatL = new THREE.MeshBasicMaterial({ color: 0x9c6d34, transparent: true, opacity: 0.82, side: THREE.DoubleSide })
+      const pMatL = new THREE.MeshBasicMaterial({ color: SCENE.dcPanel, transparent: true, opacity: 0.82, side: THREE.DoubleSide })
       const pMatR = pMatL.clone()
       const panelL = new THREE.Mesh(pGeo, pMatL)
       panelL.position.set(-5.1, 0, 0)
@@ -91,7 +92,7 @@ function _buildMeshes(scene, world) {
         new THREE.Vector3(-3.0, 0, 0.001), new THREE.Vector3(3.0, 0, 0.001),
         new THREE.Vector3(0, -0.82, 0.001), new THREE.Vector3(0, 0.82, 0.001),
       ])
-      const lMat = new THREE.LineBasicMaterial({ color: 0xeab26a, transparent: true, opacity: 0.45 })
+      const lMat = new THREE.LineBasicMaterial({ color: SCENE.dcRing, transparent: true, opacity: 0.45 })
       const linesL = new THREE.LineSegments(lGeo, lMat)
       linesL.position.set(-5.1, 0, 0)
       const linesR = new THREE.LineSegments(lGeo.clone(), lMat.clone())
@@ -101,7 +102,7 @@ function _buildMeshes(scene, world) {
       // Glow ring
       const ring = new THREE.Mesh(
         new THREE.RingGeometry(2.4, 3.8, 32),
-        new THREE.MeshBasicMaterial({ color: 0xd99a4e, transparent: true, opacity: 0.18, side: THREE.DoubleSide })
+        new THREE.MeshBasicMaterial({ color: SCENE.dcBody, transparent: true, opacity: 0.18, side: THREE.DoubleSide })
       )
       ring.rotation.x = Math.PI / 2
       group.add(ring)
@@ -109,7 +110,7 @@ function _buildMeshes(scene, world) {
       // Soft aura sphere
       group.add(new THREE.Mesh(
         new THREE.SphereGeometry(4.8, 8, 8),
-        new THREE.MeshBasicMaterial({ color: 0xd99a4e, transparent: true, opacity: 0.04 })
+        new THREE.MeshBasicMaterial({ color: SCENE.dcBody, transparent: true, opacity: 0.04 })
       ))
 
       sat.bodyMesh   = bodyMesh
@@ -118,12 +119,12 @@ function _buildMeshes(scene, world) {
       // ── LEO Relay Satellite: compact bus + solar wings ──────────────────────
       const bodyMesh = new THREE.Mesh(
         new THREE.BoxGeometry(1.4, 0.55, 0.55),
-        new THREE.MeshBasicMaterial({ color: 0x7d94b8, transparent: true, opacity: 0.92 })
+        new THREE.MeshBasicMaterial({ color: SCENE.satBody, transparent: true, opacity: 0.92 })
       )
       group.add(bodyMesh)
 
       const pGeo = new THREE.PlaneGeometry(2.0, 0.58)
-      const pMatL = new THREE.MeshBasicMaterial({ color: 0x475d78, transparent: true, opacity: 0.88, side: THREE.DoubleSide })
+      const pMatL = new THREE.MeshBasicMaterial({ color: SCENE.satPanel, transparent: true, opacity: 0.88, side: THREE.DoubleSide })
       const pMatR = pMatL.clone()
       const panelL = new THREE.Mesh(pGeo, pMatL)
       panelL.position.set(-1.7, 0, 0)
@@ -150,7 +151,7 @@ function _buildISLLines(scene) {
 
   islSegments = new THREE.LineSegments(
     geo,
-    new THREE.LineBasicMaterial({ color: 0x7d94b8, transparent: true, opacity: 0.11 })
+    new THREE.LineBasicMaterial({ color: SCENE.satBody, transparent: true, opacity: 0.11 })
   )
   islSegments.name = 'islMesh'
   islSegments.frustumCulled = false
@@ -213,16 +214,16 @@ export function updateSatellites(world) {
 
       // Color by state
       if (!sat.isDC) {
-        const bColor = sat.inSAA ? 0xc9736b : sat.eclipsed ? 0x555a63 : 0x7d94b8
-        const pColor = sat.inSAA ? 0x8f4a44 : sat.eclipsed ? 0x3a3e45 : 0x475d78
+        const bColor = sat.inSAA ? SCENE.satSAA : sat.eclipsed ? SCENE.satDark : SCENE.satBody
+        const pColor = sat.inSAA ? SCENE.satSAAPanel : sat.eclipsed ? SCENE.satDarkPanel : SCENE.satPanel
         const bOp = sat.inSAA || sat.eclipsed ? 0.5 : 0.95
         const pOp = sat.inSAA || sat.eclipsed ? 0.35 : 0.88
         sat.bodyMesh.material.color.setHex(bColor)
         sat.bodyMesh.material.opacity = bOp
         sat.panelMeshes.forEach(p => { p.material.color.setHex(pColor); p.material.opacity = pOp })
       } else {
-        const bColor = sat.eclipsed ? 0x6b7079 : 0xd99a4e
-        const pColor = sat.eclipsed ? 0x4a4e55 : 0x9c6d34
+        const bColor = sat.eclipsed ? SCENE.dcDark : SCENE.dcBody
+        const pColor = sat.eclipsed ? SCENE.dcDarkPanel : SCENE.dcPanel
         sat.bodyMesh.material.color.setHex(bColor)
         sat.panelMeshes.forEach(p => p.material.color.setHex(pColor))
       }
