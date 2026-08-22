@@ -2,3 +2,7 @@
 node_modules
 dist
 .env
+
+# Third-party skill installed locally (Apache 2.0, pbakaus/impeccable)
+.claude/skills/impeccable/
+.claude/agents/impeccable-*.md
