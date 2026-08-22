@@ -41,8 +41,10 @@ Understated, technical, not a render-fest.
 | Result | 250 ms, everyone waits | 20 ms |
 
 Caption: **A CDN is a delivery network — it keeps copies of content close to
-users and picks the fastest route to one.** Cloudflare and Akamai do this with
-~300 ground sites. *The map they route over has never moved.*
+users and picks the fastest route to one.** Cloudflare runs ~330 cities;
+Akamai runs 4,000+ edge locations. *Every one of them is bolted to the ground.*
+
+*(Figures in the table above are illustrative of the mechanism, not measured.)*
 
 **Visual B — "Why orbit breaks it" (right half, 4 line icons in a row):**
 
@@ -60,19 +62,19 @@ users and picks the fastest route to one.** Cloudflare and Akamai do this with
 
 ## Slide 3 — This Is Not Speculative
 
-**Header:** Four of the largest companies on Earth committed to orbital compute
-in the last 12 months.
+**Header:** The giants committed to orbital compute in the last 12 months.
 
-**Visual: horizontal timeline, Nov 2025 → Aug 2026, one card per event.**
+**Visual: horizontal timeline, Oct 2025 → Aug 2026, one card per event.
+Rows are already in chronological order — keep them that way left to right.**
 
 | Date | Who | What |
 |---|---|---|
+| Oct 2025 | **Jeff Bezos** | **Gigawatt-scale data centres in space within 10–20 years.** Blue Origin has been building the tech for over a year. |
 | Nov 2 2025 | **Starcloud + NVIDIA** | First data-centre-class GPU in orbit — an **H100**, running inference on Gemma. |
 | Nov 4 2025 | **Google** | **Project Suncatcher** — TPUs in orbit. Two prototype satellites with Planet Labs by **early 2027**. TPUs survived a **5-year LEO radiation dose** in a particle accelerator. |
-| Oct 2025 | **Jeff Bezos** | **Gigawatt-scale data centres in space within 10–20 years.** Blue Origin has been building the tech for over a year. |
 | Dec 2025 | **Starcloud** | First LLM **trained** in orbit. |
 | Jan 30 2026 | **SpaceX** | FCC filing for an orbital data-centre constellation of up to **1,000,000 satellites**, 500–2,000 km, targeting **100 GW** of compute. |
-| 2025–26 | **China (ADA Space / Zhejiang Lab)** | **Three-Body Computing Constellation** — 12 satellites flying, 5 POPS, 100 Gbps laser links, **2,800 planned**. |
+| Feb 2026 | **China (ADA Space / Zhejiang Lab)** | **Three-Body Computing Constellation** — 12 satellites flying, 5 POPS, 100 Gbps laser links, **2,800 planned**. |
 | Aug 2026 | **Starcloud** | Raises **$250 M**; NVIDIA **Blackwell** on the next launch, Oct 2026. |
 
 **Scale callouts, oversized monospace:**
@@ -95,12 +97,13 @@ Rad-hard silicon · Solar arrays · Radiators · Laser links · Launch capacity
 Which orbital DC serves this request, right now, given that it is eclipsed,
 crossing the South Atlantic Anomaly, and its downlink gateway is in rain?
 
-**The pull-quote (frame it, this is the whole thesis):**
+**The objection (frame it — this is the whole thesis):**
 
-> *"LEO adds 20–40 ms round-trip, plus Doppler shifts and handover delays,
-> making orbital compute better suited for AI training and batch processing
-> **rather than latency-sensitive inference**."*
-> — the standard industry objection to orbital compute
+> The standard engineering case against orbital compute: LEO adds round-trip
+> delay on top of Doppler shift and satellite handover, so orbit suits
+> **AI training and batch work — not latency-sensitive inference.**
+> *(See IEEE Spectrum, "Why Thermodynamics Rules Future Orbital Data Centers,"
+> and the cooling/latency analyses listed on the reference slide.)*
 
 **Response line, brass, large:**
 That objection is a **routing problem**, not a physics problem.
@@ -289,7 +292,10 @@ Something has to route to them.
 
 ---
 
-## Appendix — Sources (for the generator; put on a final reference slide or omit)
+## Appendix — Sources
+
+**Do not add an 11th slide.** Fold these into slide 10's footer as a single
+small-type line, or omit them entirely. The deck is exactly 10 slides.
 
 - Google, *Project Suncatcher* — blog.google / research.google, Nov 4 2025
 - SpaceNews / DCD — SpaceX FCC filing, 1M-satellite orbital data centre, Jan 30 2026
