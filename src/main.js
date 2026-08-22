@@ -15,6 +15,20 @@ import {
   addDecision, clearDecisions, setTicker, setMetrics, resetMetrics,
   setSendState, showDeepDive, showInspector, hideInspector,
 } from './ui.js'
+import { initDashboard, renderDashboard, getLearnWindow, openDashboard } from './dashboard.js'
+import { record, eventCount, seedEvents, adaptiveEnabled, summarize } from './telemetry.js'
+import { generateHistory } from './seed.js'
+
+// ─── Product state bootstrap ──────────────────────────────────────────────
+// The network ships with its own operating history so the analytics view is
+// populated on a cold open. Seeds once, then never again — real requests
+// append to the same log.
+
+function ensureHistory() {
+  if (eventCount() > 0) return
+  const n = seedEvents(generateHistory({ days: 30, perDay: 42 }))
+  console.log(`[OrbitalCDN] seeded ${n} historical requests (30 d)`)
+}
 
 // ─── Boot ─────────────────────────────────────────────────────────────────
 
@@ -28,8 +42,15 @@ async function main() {
   // 1. Photorealistic Earth
   const world = initGlobe(container)
 
-  // Wait one frame for globe.gl to mount the renderer
-  await new Promise(r => requestAnimationFrame(r))
+  // Wait one frame for globe.gl to mount the renderer.
+  // rAF never fires in a background tab, so race it with a timer — otherwise
+  // the whole app hangs here when the page is opened in an unfocused tab.
+  await new Promise(r => {
+    let done = false
+    const go = () => { if (!done) { done = true; r() } }
+    requestAnimationFrame(go)
+    setTimeout(go, 120)
+  })
 
   // 2. Satellites + ISL mesh
   const scene = world.scene()
@@ -39,7 +60,11 @@ async function main() {
   initNetwork(world)
 
   // 4. UI
+  ensureHistory()
   initInsights()
+  initDashboard({ onChange: updateAdaptiveBadge })
+  updateAdaptiveBadge()
+  initIntro()
   initCityGrid(city => {
     setSelectedCity(city.city, world)
     if (!isRunning()) world.pointOfView({ lat: city.lat, lng: city.lon, altitude: 1.8 }, 1200)
@@ -87,7 +112,12 @@ async function main() {
       service: selectedService,
       policy,
       sats,
+      learnWindow: getLearnWindow(),
     })
+
+    // Persist the outcome — this request is now part of what the network learns from
+    record(data, { adaptive: data.adaptive })
+    updateAdaptiveBadge()
     lastData = data
 
     // Clear existing arcs
@@ -200,6 +230,51 @@ function _initSatHover(world) {
   domEl.addEventListener('mouseleave', () => {
     hideInspector()
   })
+}
+
+// First-run brief — states the problem before the judge has to infer it, and
+// hands them the fastest route to the substance. Dismissal is remembered.
+function initIntro() {
+  const card = document.getElementById('intro-card')
+  if (!card) return
+  let seen = false
+  try { seen = localStorage.getItem('ocdn.intro.seen') === '1' } catch { /* ignore */ }
+  if (seen) return
+
+  // Lead with the strongest finding already in the seeded history
+  try {
+    const s   = summarize('30d')
+    const win = [...s.byCity].filter(c => c.n >= 4).sort((a, b) => b.winRate - a.winRate)[0]
+    const el  = document.getElementById('intro-stat')
+    if (el && win) {
+      el.textContent = `orbital beat terrestrial fibre for ${(win.winRate * 100).toFixed(0)}% of ${win.key} requests `
+                     + `across ${s.overall.n} logged requests, saving ${Math.round(win.savedMs)} ms on average.`
+    } else if (el) {
+      el.textContent = `${s.overall.n} requests logged over the last 30 days.`
+    }
+  } catch { /* non-fatal */ }
+
+  card.classList.remove('hidden')
+  const dismiss = () => {
+    card.classList.add('hidden')
+    try { localStorage.setItem('ocdn.intro.seen', '1') } catch { /* ignore */ }
+  }
+  document.getElementById('intro-close')?.addEventListener('click', dismiss)
+  document.getElementById('intro-analytics')?.addEventListener('click', () => { dismiss(); openDashboard() })
+  document.getElementById('intro-send')?.addEventListener('click', () => {
+    dismiss()
+    document.getElementById('send-btn')?.click()
+  })
+}
+
+function updateAdaptiveBadge() {
+  const el = document.getElementById('adaptive-badge')
+  if (!el) return
+  const on = adaptiveEnabled()
+  el.textContent = on ? `◈ ADAPTIVE · ${eventCount()} REQS` : `◈ FIXED POLICY · ${eventCount()} REQS`
+  el.classList.toggle('badge-adaptive-on', on)
+  const overlay = document.getElementById('dash-overlay')
+  if (overlay && !overlay.classList.contains('hidden')) renderDashboard()
 }
 
 function _initMobileTabs() {

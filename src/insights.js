@@ -28,7 +28,7 @@ const SECTIONS = [
           <div class="arch-tier-body tier-orbit">
             <div class="arch-node highlight"><span class="arch-node-icon">🛰️</span>LEO Satellite Mesh</div>
             <div class="arch-node"><span class="arch-node-icon">—</span>ISL: Inter-Satellite Links</div>
-            <div class="arch-node"><span class="arch-node-icon">📡</span>Walker-Delta 72-sat</div>
+            <div class="arch-node"><span class="arch-node-icon">📡</span>Walker-Delta 180-sat</div>
           </div>
         </div>
         <div class="arch-tier-connector">↕ Optical/RF Feeder</div>
@@ -45,8 +45,8 @@ const SECTIONS = [
       <div class="ins-cards">
         <div class="ins-card">
           <div class="ins-card-icon">🛰️</div>
-          <div class="ins-card-title">72 LEO Satellites</div>
-          <div class="ins-card-body">Walker-Delta at 550 km, 53° inclination. 6 orbital planes × 12 satellites. Inter-Satellite Links form a mesh backbone above the atmosphere.</div>
+          <div class="ins-card-title">180 LEO Satellites</div>
+          <div class="ins-card-body">Walker-Delta at 550 km, 53° inclination. 9 orbital planes × 20 satellites. Inter-Satellite Links form a mesh backbone above the atmosphere.</div>
         </div>
         <div class="ins-card">
           <div class="ins-card-icon">🖥️</div>
@@ -104,109 +104,37 @@ const SECTIONS = [
       </div>
 
       <div class="ins-equation">
-        <span class="eq-label">Propagation latency formula</span>
+        <span class="eq-label">Cost function — as implemented in src/engine.js</span>
         <div class="eq-main">
-          t_prop = <span class="eq-term">d_total</span> / <span class="eq-weight">c_medium</span>
-        </div>
-        <br/>
-        <div class="eq-cmt">// vacuum path: d ≈ 6000 + N_hops × 1200 km (uplink + ISL mesh + downlink)</div>
-        <div class="eq-cmt">// fiber path:  d ≈ great_circle × 1.25 (cable detour factor) / 0.67c</div>
-      </div>
-
-      <p class="ins-section-sub" style="margin-top:20px">
-        The 1.25× fiber detour factor accounts for undersea cables routing via relay stations, coastal geography,
-        and cable landing points rather than straight great-circle paths.
-        Orbital CDN eliminates this detour: laser ISLs route along geodesics between satellites, effectively straight-line vacuum paths.
-      </p>
-    `,
-  },
-
-  {
-    id: 'orbital',
-    icon: '🛰️',
-    label: 'Orbital Mechanics',
-    render: () => `
-      <div class="ins-section-eyebrow">Satellite Constellation</div>
-      <h2 class="ins-section-title">Walker-Delta & SGP4 Propagation</h2>
-      <p class="ins-section-sub">
-        The 72-satellite constellation uses a Walker-Delta pattern — a mathematically optimal shell that gives
-        near-uniform global coverage. Real-time positions are computed via the SGP4/SDP4 propagator using
-        TLE (Two-Line Element) sets fetched live from CelesTrak.
-      </p>
-
-      <div class="ins-cards">
-        <div class="ins-card">
-          <div class="ins-card-icon">🔵</div>
-          <div class="ins-card-title">Walker-Delta 72/6/1</div>
-          <div class="ins-card-body">72 sats in 6 orbital planes, 12 per plane. 53° inclination. Phasing offset (F=1) spreads sats evenly in RAAN for gap-free coverage between ±80° latitude.</div>
-        </div>
-        <div class="ins-card">
-          <div class="ins-card-icon">📡</div>
-          <div class="ins-card-title">TLE + SGP4</div>
-          <div class="ins-card-body">Two-Line Elements from CelesTrak give epoch state vectors. SGP4 (Simplified General Perturbations 4) propagates forward accounting for J2 oblateness, drag, and solar radiation pressure.</div>
-        </div>
-        <div class="ins-card">
-          <div class="ins-card-icon">☀️</div>
-          <div class="ins-card-title">SSO Dawn-Dusk</div>
-          <div class="ins-card-body">Orbital DCs use sun-synchronous 97.8° retrograde orbit, always crossing terminator at 06:00/18:00 local solar time. Permanent solar exposure eliminates eclipse-cycle power cycling.</div>
-        </div>
-        <div class="ins-card">
-          <div class="ins-card-icon">—</div>
-          <div class="ins-card-title">ISL Mesh</div>
-          <div class="ins-card-body">Each satellite maintains 4 Inter-Satellite Links: +/− along-track neighbors plus ±1 cross-plane. Cross-plane ISLs disabled above |lat|>60° where geometry degrades (polar convergence).</div>
-        </div>
-      </div>
-
-      <div class="ins-equation">
-        <span class="eq-label">SGP4 state propagation (simplified)</span>
-        <div class="eq-main">
-          r(t) = <span class="eq-term">SGP4</span>( <span class="eq-weight">satrec</span>, Δt ) → ECI → <span class="eq-term">geodetic</span>( lat, lon, alt )
-        </div>
-        <br/>
-        <div class="eq-cmt">// satrec = twoline2satrec(TLE line1, TLE line2)     — parsed epoch + orbital elements</div>
-        <div class="eq-cmt">// ECI    = Earth-Centered Inertial frame position    — km from geocenter</div>
-        <div class="eq-cmt">// gmst   = Greenwich Mean Sidereal Time (rotates with Earth)</div>
-        <div class="eq-cmt">// geodetic converts ECI → [lat, lon, alt] via GMST rotation matrix</div>
-      </div>
-    `,
-  },
-
-  {
-    id: 'cost',
-    icon: '⚙️',
-    label: 'Cost Function',
-    render: () => `
-      <div class="ins-section-eyebrow">Decision Engine</div>
-      <h2 class="ins-section-title">6-Term Routing Cost Function</h2>
-      <p class="ins-section-sub">
-        Every routing decision minimizes a multi-objective cost function C(P, DC, G) across all candidate
-        paths P, Orbital DCs, and Ground Gateways G. The six terms capture latency, solar fraction,
-        congestion, radiation exposure, solar power of the DC, and weather at the gateway.
-      </p>
-
-      <div class="ins-equation">
-        <span class="eq-label">Cost function — full form</span>
-        <div class="eq-main">
-          C(P, DC, G) =
-          <span class="eq-weight">w_lat</span> · <span class="eq-term">Σ L_e</span>
-          + <span class="eq-weight">w_eng</span> · <span class="eq-term">Σ E_e</span>
-          + <span class="eq-weight">w_cong</span> · <span class="eq-term">Σ Q_e</span>
-          + <span class="eq-weight">w_rad</span> · <span class="eq-term">Σ R_n</span>
+          C(DC) =
+          <span class="eq-weight">w_lat</span> · <span class="eq-term">d_lon</span>
           + <span class="eq-weight">w_sol</span> · <span class="eq-term">S_DC</span>
+          + <span class="eq-weight">w_rad</span> · <span class="eq-term">R_DC</span>
+          + <span class="eq-weight">γ·w_sol</span> · <span class="eq-term">P_DC</span>
+        </div>
+        <div class="eq-main">
+          C(G) &nbsp;=
+          <span class="eq-weight">w_lat</span> · <span class="eq-term">d_G</span>
           + <span class="eq-weight">w_wx</span> · <span class="eq-term">W_G</span>
+          + <span class="eq-weight">γ·w_wx</span> · <span class="eq-term">P_G</span>
         </div>
         <br/>
-        <div class="eq-cmt">// L_e  = normalized edge latency per hop     (lower = better vacuum path)</div>
-        <div class="eq-cmt">// E_e  = edge energy cost                    (laser ISL &lt; radio &lt; fiber)</div>
-        <div class="eq-cmt">// Q_e  = queue depth / congestion penalty    (0 if ISL bandwidth &gt; 90% util)</div>
-        <div class="eq-cmt">// R_n  = per-node radiation dose (SAA penalty = +2.0 if node in SAA bbox)</div>
-        <div class="eq-cmt">// S_DC = 0 if DC eclipsed, 1 if DC sunlit    (reward solar-powered compute)</div>
-        <div class="eq-cmt">// W_G  = 0 clear, 0.5 cloudy, 1.0 rain/snow  (Ka-band rain fade penalty)</div>
+        <div class="eq-cmt">// d_lon = normalised longitude separation, origin to DC   (0-1)</div>
+        <div class="eq-cmt">// S_DC  = 1 if DC eclipsed, 0 if sunlit                   (reward solar compute)</div>
+        <div class="eq-cmt">// R_DC  = 1 if DC inside the SAA bounding box, else 0     (radiation dose)</div>
+        <div class="eq-cmt">// d_G   = normalised angular distance, origin to gateway  (0-1)</div>
+        <div class="eq-cmt">// W_G   = 0 clear, 0.5 cloudy, 1.0 rain                   (Ka-band rain fade)</div>
+        <div class="eq-cmt">// P_DC, P_G = LEARNED penalties from observed telemetry over the selected window</div>
+        <div class="eq-cmt">// γ     = 0.6, adaptation gain — how far history may bend the policy weights</div>
       </div>
 
       <p class="ins-section-sub">
-        The six weight vectors are tuned per routing policy. Argmin across all DC candidates picks the optimal orbital data center.
-        Gateway selection uses a second argmin on <span style="color:var(--cyan);font-family:JetBrains Mono">w_wx·W_G + w_lat·lat_to_gateway</span>.
+        Argmin across all DC candidates picks the orbital data centre; a second argmin picks the ground gateway.
+        The final terms are what make the network <b>adaptive</b>: <span style="color:var(--cyan);font-family:JetBrains Mono">P_DC</span> and
+        <span style="color:var(--cyan);font-family:JetBrains Mono">P_G</span> are not authored constants — they are recomputed from the
+        request log every time you change the analytics time window, so the router's behaviour is a function of what the
+        network actually observed, not of what anyone assumed. Turn adaptive routing off in
+        <b>Network Analytics</b> and both terms drop to zero, recovering the fixed-policy engine.
       </p>
 
       <div class="ins-cards">

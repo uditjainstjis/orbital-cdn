@@ -22,6 +22,8 @@
         <span class="badge badge-sats" id="sat-badge">180 SATS</span>
         <span class="badge badge-dc" id="dc-badge">4 DCs SUNLIT</span>
         <span class="badge badge-time" id="utc-clock">UTC 00:00:00</span>
+        <span class="badge badge-adaptive" id="adaptive-badge">◈ ADAPTIVE</span>
+        <button class="badge dash-open-btn" id="dash-btn">📊 Network Analytics</button>
         <button class="badge insights-btn" id="insights-btn">📐 Architecture &amp; Insights</button>
       </div>
     </div>
@@ -108,10 +110,8 @@
         </div>
         <button class="deepdive-btn hidden" id="deepdive-btn">🔬 Technical Deep Dive</button>
         <div id="compare-section" class="hidden" style="margin-top:12px">
-          <div class="panel-label" style="margin-bottom:8px">Policy Comparison (this request)</div>
-          <div class="compare-row"><span class="compare-label">Latency</span><div class="compare-track"><div class="compare-fill" id="cmp-lat-fill" style="background:var(--cyan)"></div></div><span class="compare-val" id="cmp-lat-val">—</span></div>
-          <div class="compare-row"><span class="compare-label">Green</span><div class="compare-track"><div class="compare-fill" id="cmp-grn-fill" style="background:var(--green)"></div></div><span class="compare-val" id="cmp-grn-val">—</span></div>
-          <div class="compare-row"><span class="compare-label">Reliable</span><div class="compare-track"><div class="compare-fill" id="cmp-rel-fill" style="background:var(--red)"></div></div><span class="compare-val" id="cmp-rel-val">—</span></div>
+          <div class="panel-label" style="margin-bottom:8px">Policy Comparison — this exact request, re-run</div>
+          <div id="compare-rows"></div>
         </div>
       </div>
     </div>
@@ -144,6 +144,27 @@
       <button class="mob-tab" id="mob-send">▶ Send</button>
     </div>
 
+    <!-- First-run brief: what this is, and where the substance is -->
+    <div id="intro-card" class="glass-panel hidden">
+      <button id="intro-close" title="Dismiss">✕</button>
+      <div class="intro-eyebrow">ORBITAL CDN</div>
+      <h1 class="intro-title">Two thirds of the planet is far from a cloud region.</h1>
+      <p class="intro-body">
+        Content served from orbit can beat long-haul fibre for those users — but only if the router
+        respects constraints that don't exist on the ground: data centres go dark in eclipse, radiation
+        corrupts packets over the South Atlantic Anomaly, and rain closes ground gateways.
+      </p>
+      <p class="intro-body">
+        This simulator routes a real request across <b>180 SGP4-propagated satellites</b> and
+        <b>4 orbital data centres</b>, then <b>learns from every request it has served</b> to route the next one better.
+      </p>
+      <div class="intro-actions">
+        <button class="intro-btn intro-btn-primary" id="intro-analytics">📊 See 30 days of network history</button>
+        <button class="intro-btn" id="intro-send">▶ Route a request live</button>
+      </div>
+      <p class="intro-foot">Findings so far: <span id="intro-stat">loading…</span></p>
+    </div>
+
     <!-- Reasoning ticker (bottom center) -->
     <div id="reasoning-ticker" class="hidden">
       <div id="ticker-text"></div>
@@ -162,6 +183,17 @@
         <div class="modal-nav" id="modal-nav"></div>
         <div id="modal-body" class="modal-body"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- Network Analytics overlay -->
+  <div id="dash-overlay" class="hidden">
+    <div id="dash-panel">
+      <div id="dash-topbar">
+        <div class="dash-logo">◎ ORBITAL CDN <span>/ Network Analytics</span></div>
+        <button class="dash-close" id="dash-close">✕ Close</button>
+      </div>
+      <div id="dash-content"></div>
     </div>
   </div>
 

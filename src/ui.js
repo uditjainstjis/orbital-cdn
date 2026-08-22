@@ -120,7 +120,7 @@ export function setTicker(text) {
 
 // ─── Metrics ──────────────────────────────────────────────────────────────
 
-export function setMetrics({ rtt, nHops, solar, saaAvoided, baseline, stretch }) {
+export function setMetrics({ rtt, nHops, solar, saaAvoided, baseline, stretch, counterfactual, activePolicy }) {
   const set = (id, val) => {
     const v = document.getElementById('mv-' + id)
     const b = document.getElementById('m-' + id)
@@ -132,18 +132,28 @@ export function setMetrics({ rtt, nHops, solar, saaAvoided, baseline, stretch })
   set('solar', solar ? 'YES' : 'NO')
   set('saa',   saaAvoided ? 'YES' : 'NO')
 
+  // Policy comparison — each value is this same request actually re-run under
+  // the other policies against the live constellation, not a fixed multiplier.
   const cmpSec = document.getElementById('compare-section')
-  if (cmpSec) cmpSec.classList.remove('hidden')
-  const maxR = Math.max(baseline, Math.round(baseline * 1.15), Math.round(baseline * 1.22))
-  const setBar = (id, val) => {
-    const fill = document.getElementById('cmp-' + id + '-fill')
-    const txt  = document.getElementById('cmp-' + id + '-val')
-    if (fill) fill.style.width = (val / maxR * 100) + '%'
-    if (txt)  txt.textContent  = val + 'ms'
-  }
-  setBar('lat', baseline)
-  setBar('grn', Math.round(baseline * 1.15))
-  setBar('rel', Math.round(baseline * 1.22))
+  if (!cmpSec || !counterfactual) return
+  cmpSec.classList.remove('hidden')
+
+  const COLORS = { latency: 'var(--cyan)', balanced: 'var(--purple)', green: 'var(--green)', reliable: 'var(--red)' }
+  const entries = Object.entries(counterfactual).filter(([, v]) => Number.isFinite(v))
+  const maxR    = Math.max(...entries.map(([, v]) => v), 1)
+  const best    = entries.reduce((b, e) => (!b || e[1] < b[1]) ? e : b, null)
+
+  const host = document.getElementById('compare-rows')
+  if (!host) return
+  host.innerHTML = entries.map(([k, v]) => `
+    <div class="compare-row${k === activePolicy ? ' compare-active' : ''}">
+      <span class="compare-label">${k[0].toUpperCase() + k.slice(1)}${k === activePolicy ? ' ◂' : ''}</span>
+      <div class="compare-track"><div class="compare-fill" style="width:${(v / maxR) * 100}%;background:${COLORS[k]}"></div></div>
+      <span class="compare-val">${v}ms</span>
+    </div>`).join('')
+    + (best && best[0] !== activePolicy
+        ? `<div class="compare-hint">${best[0][0].toUpperCase() + best[0].slice(1)} would have been ${counterfactual[activePolicy] - best[1]} ms faster here.</div>`
+        : `<div class="compare-hint compare-hint-ok">Selected policy was the fastest available for this request.</div>`)
 }
 
 export function resetMetrics() {

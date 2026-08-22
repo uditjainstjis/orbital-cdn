@@ -9,16 +9,27 @@ export let skipping = false
 let seqActive = false
 let arcs      = []         // accumulating route arcs for globe.gl
 
-const sleep = ms => new Promise(r => {
-  if (skipping) return r()
-  const t = setTimeout(r, ms / SPEED)
-  _sleepTimers.push(t)
-})
+// A pending sleep must keep hold of its resolver, not just its timer id.
+// Skipping cancels the timer AND resolves the promise — cancelling alone would
+// leave the awaiting sequence suspended forever, which deadlocks seqActive and
+// permanently disables Send, Replay, Deep Dive and satellite hover.
 const _sleepTimers = []
 
+const sleep = ms => new Promise(r => {
+  if (skipping) return r()
+  const entry = { resolve: r }
+  entry.id = setTimeout(() => {
+    const i = _sleepTimers.indexOf(entry)
+    if (i !== -1) _sleepTimers.splice(i, 1)
+    r()
+  }, ms / SPEED)
+  _sleepTimers.push(entry)
+})
+
 function clearTimers() {
-  _sleepTimers.forEach(clearTimeout)
-  _sleepTimers.length = 0
+  // Take a copy first: each resolve() can synchronously queue another sleep.
+  const pending = _sleepTimers.splice(0, _sleepTimers.length)
+  pending.forEach(e => { clearTimeout(e.id); e.resolve() })
 }
 
 export function setSpeed(s) { SPEED = s }
@@ -248,6 +259,8 @@ export async function runSequence(data, world) {
   _setMetrics({
     rtt, nHops, solar: !dc.eclipsed, saaAvoided: data.saaCross === 0,
     baseline, stretch,
+    counterfactual: data.counterfactual,
+    activePolicy:   policy,
   })
 
   // Re-enable auto-rotate
@@ -258,7 +271,7 @@ export async function runSequence(data, world) {
 }
 
 export function skipSequence() {
+  if (!seqActive) return
   skipping = true
-  clearTimers()
-  // Remaining sleeps resolve immediately; the sequence finishes on next microtask flush
+  clearTimers()   // resolves the in-flight sleep; later sleeps short-circuit on `skipping`
 }
