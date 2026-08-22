@@ -556,3 +556,9 @@ to the spec's premise: observing removes 78 of 80 failures, forecasting the last
 - [2026-08-22 23:19]
   > [Image #5] i don't want this component to be scrollable entire thing should fit in one page without scroll
 
+- [2026-08-22 23:48]
+  > push project to deployment
+
+
+Udit, verbatim: *"push project to deployment"* — already live; verified rather than re-pushed.
+Only the ledger was dirty; committed it.
