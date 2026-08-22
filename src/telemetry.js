@@ -160,9 +160,12 @@ function statsFor(events) {
       : 0,
     // Share of requests where the orbital path beat terrestrial fibre, and by how much
     winRate: n ? events.filter(e => e.rtt < e.base).length / n : 0,
-    savedMs: n
-      ? events.reduce((s, e) => s + Math.max(0, e.base - e.rtt), 0) / n
-      : 0,
+    // Mean saving across the requests that actually beat fibre — averaging the
+    // zeros in would understate every winning route.
+    savedMs: (() => {
+      const wins = events.filter(e => e.rtt < e.base)
+      return wins.length ? wins.reduce((s, e) => s + (e.base - e.rtt), 0) / wins.length : 0
+    })(),
   }
 }
 
@@ -182,10 +185,17 @@ function timeSeries(events, bucket, from, to) {
     const b = Math.floor(e.ts / size)
     if (slots.has(b)) slots.get(b).push(e)
   })
-  return [...slots.entries()].map(([b, evs]) => {
+  // The first and last buckets are usually clipped by the window edge, so
+  // their counts are not comparable to the interior ones. Flag them rather
+  // than letting a half-width bucket read as a traffic collapse.
+  const entries = [...slots.entries()]
+  return entries.map(([b, evs], i) => {
     const rtts = evs.map(e => e.rtt).sort((a, b2) => a - b2)
+    const edge = (i === 0 && from !== -Infinity && (from % size) !== 0)
+              || (i === entries.length - 1 && (to % size) !== 0)
     return {
       t:      b * size,
+      partial: edge,
       n:      evs.length,
       p50:    percentile(rtts, 50),
       p95:    percentile(rtts, 95),
@@ -225,9 +235,12 @@ export function summarize(windowId, now = Date.now()) {
   const sortN = (a, b) => b.n - a.n
   ;[byPolicy, byCity, byGateway, byDC, byService].forEach(a => a.sort(sortN))
 
-  // Adaptive-vs-fixed comparison, only meaningful once both exist in-window
-  const adaptiveEvs = events.filter(e => e.adaptive)
-  const fixedEvs    = events.filter(e => !e.adaptive)
+  // Adaptive-vs-fixed compares LIVE requests only. Seeded history is all
+  // stamped adaptive:false, so including it would put 900+ synthetic rows in
+  // the "fixed" arm against a handful of real ones — not a control group.
+  const liveEvs     = events.filter(e => !e.synthetic)
+  const adaptiveEvs = liveEvs.filter(e => e.adaptive)
+  const fixedEvs    = liveEvs.filter(e => !e.adaptive)
 
   return {
     windowId,
@@ -263,7 +276,7 @@ function deriveInsights({ events, overall, byPolicy, byGateway, byDC, byCity }) 
   }
 
   // 1. Which policy actually delivered the best tail latency
-  const ranked = [...byPolicy].filter(p => p.n >= 3).sort((a, b) => a.p95 - b.p95)
+  const ranked = [...byPolicy].filter(p => p.n >= 20).sort((a, b) => a.p95 - b.p95)
   if (ranked.length >= 2) {
     const best  = ranked[0]
     const worst = ranked[ranked.length - 1]
@@ -358,7 +371,7 @@ export function adaptiveProfile(windowId, now = Date.now()) {
     }
   }
   if (events.length < MIN_LEARN_N) {
-    return { ready: false, gwPenalty: {}, dcPenalty: {}, cityBest: {}, sampleN: events.length, usedWindow: usedId, widened: false }
+    return { ready: false, gwPenalty: {}, dcLatPenalty: {}, dcRadPenalty: {}, cityBest: {}, sampleN: events.length, usedWindow: usedId, widened: false }
   }
 
   const gwPenalty = {}
@@ -368,21 +381,35 @@ export function adaptiveProfile(windowId, now = Date.now()) {
     gwPenalty[k] = Math.min(1, meanWx / 22)
   })
 
-  const dcPenalty = {}
-  groupBy(events, e => e.dc).forEach((v, k) => {
-    const ecl = v.filter(e => e.dcEcl).length / v.length
-    const saa = v.filter(e => e.dcSAA).length / v.length
-    dcPenalty[k] = Math.min(1, ecl * 0.7 + saa * 0.3)
+  // Two separate DC signals, because they are weighted by different policy
+  // coefficients and mixing them was a bug.
+  //
+  // Note what is NOT here: historical eclipse share. The engine already reads
+  // `dc.eclipsed` instantaneously, so a windowed average of it is strictly less
+  // information than the flag the cost function already has — charging for both
+  // double-counts the same orbital geometry. What history *can* contribute is
+  // persistent tail-latency disadvantage, which no snapshot reveals.
+  const dcLatPenalty = {}
+  const dcRadPenalty = {}
+  const dcGroups     = groupBy(events, e => e.dc)
+  const dcP95        = new Map()
+  dcGroups.forEach((v, k) => dcP95.set(k, percentile(v.map(e => e.rtt).sort((a, b) => a - b), 95)))
+  const bestP95 = Math.min(...dcP95.values())
+  dcGroups.forEach((v, k) => {
+    dcLatPenalty[k] = bestP95 > 0 ? Math.min(1, (dcP95.get(k) - bestP95) / bestP95) : 0
+    dcRadPenalty[k] = v.filter(e => e.dcSAA).length / v.length
   })
 
+  // Surfaced as a RECOMMENDATION in the UI. Deliberately not auto-applied —
+  // silently overriding the policy the user selected would make the control lie.
   const cityBest = {}
   groupBy(events, e => e.city).forEach((v, k) => {
     const byPol = [...groupBy(v, e => e.policy)]
       .map(([p, evs]) => ({ p, n: evs.length, p95: percentile(evs.map(e => e.rtt).sort((a, b) => a - b), 95) }))
-      .filter(x => x.n >= 3)
+      .filter(x => x.n >= 20)
       .sort((a, b) => a.p95 - b.p95)
     if (byPol.length) cityBest[k] = byPol[0].p
   })
 
-  return { ready: true, gwPenalty, dcPenalty, cityBest, sampleN: events.length, usedWindow: usedId, widened: usedId !== windowId }
+  return { ready: true, gwPenalty, dcLatPenalty, dcRadPenalty, cityBest, sampleN: events.length, usedWindow: usedId, widened: usedId !== windowId }
 }

@@ -54,6 +54,21 @@ regions are far away, and loses where they are close.
 7. **Insights page contradicted the code** — claimed 72 sats / 6 planes (real: 180 / 9)
    and published a cost function with two terms (`w_eng`, `w_cong`) that never existed.
 
+## Adaptive loop — measured, after the second review
+- Learned gateway penalties (0.06-0.31) no longer track current weather (0.00 this
+  block) — the closed-form `weatherMs/22` collapse is gone; weather now varies at
+  runtime in 6-hour blocks per gateway (`network.js gatewayWeather`).
+- DC signals split by objective: tail-latency penalty 0 → 0.563, SAA penalty 0 → 0.245.
+  Historical eclipse share was REMOVED — the engine reads `dc.eclipsed` instantaneously,
+  so a windowed average of it is strictly less information, double-charged.
+- Window selector now changes routing: 7D vs 30D differs in 4/32, 24H vs 7D in 5/32.
+  Before this change 7D/30D/ALL were byte-identical in 96/96.
+- Adaptive on vs off: **6/32 route flips**, mean RTT 115 ms vs 118 ms, max 215 ms (sane).
+- Seed now calls the engine's own `dcCostMs`/`gwCostMs`. Previously it scored in
+  normalised units and disagreed with the shipped router on 17.7% of balanced DC picks.
+- Policy Pareto frontier (n=739-1158): latency p50 65 ms / 13.7% rain · balanced 67 ·
+  reliable 70 ms with **0.0% rain exposure** · green 78 ms, longest paths for solar.
+
 ## Live / refuted
 - LIVE: dev server `npx vite --port 5178`. Build clean.
 - NOT YET DONE: push + Vercel deploy (needs Udit's go-ahead), README/FEATURES rewrite.

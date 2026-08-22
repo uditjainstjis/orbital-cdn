@@ -367,22 +367,26 @@ score = <span class="val">${w.lat}</span>·dist + <span class="val">${w.wx}</spa
 
   <div class="modal-section" id="s7">
     <div class="modal-section-title">§7 · What Each Policy Would Have Done Differently</div>
-    <div class="code-block"><span class="cmt">// Same request (${d.city.city} → ${d.service.service}) under all 4 policies:</span>
+    <div class="code-block"><span class="cmt">// Same request (${d.city.city} → ${d.service.service}), same constellation state,</span>
+<span class="cmt">// actually re-run under each policy. Relay chain held fixed so the only</span>
+<span class="cmt">// variable is the policy itself. See comparePolicies() in src/engine.js.</span>
+${['latency', 'balanced', 'green', 'reliable'].map(pol => {
+  const cf   = d.counterfactual?.[pol]
+  const icon = { latency: '⚡', balanced: '⚖️', green: '🌱', reliable: '🛡️' }[pol]
+  const w    = POLICY_WEIGHTS[pol]
+  const mine = pol === d.policy
+  const val  = Number.isFinite(cf) ? `${cf} ms` : 'n/a'
+  return `${icon} <span class="kw">${pol.padEnd(9)}</span> w={lat:${w.lat}, sol:${w.sol}, rad:${w.rad}, wx:${w.wx}}
+   → RTT ${mine ? `<span class="ok">${val}</span>  ← selected` : `<span class="val">${val}</span>`}`
+}).join('\n')}
 
-⚡ <span class="kw">Latency</span>:  w={lat:0.95, sol:0.05, rad:0.05, wx:0.05}
-   → Nearest DC regardless of eclipse/SAA → ~<span class="val">${baseline} ms</span>
-   → No SAA avoidance · accepts eclipsed DCs · accepts rain gateways
-
-🌱 <span class="kw">Green</span>:    w={lat:0.20, sol:0.90, rad:0.20, wx:0.30, eng:0.85}
-   → Forces sunlit DC (w_sol=0.90) → ${d.sunlitDCs > 0 ? 'sunlit DC reachable ✓' : 'no sunlit DC available'}
-   → Fewer active ISL hops → ~<span class="val">${Math.round(baseline * 1.15)} ms</span>
-
-🛡️ <span class="kw">Reliable</span>: w={lat:0.20, sol:0.30, rad:0.95, wx:0.90}
-   → Hard SAA avoidance (w_rad=0.95) → ${d.saaCross > 0 ? 'would reroute to SAA-free path' : 'SAA-free path already chosen ✓'}
-   → Always clear-weather gateway → ~<span class="val">${Math.round(baseline * 1.22)} ms</span>
-
-⚖️ <span class="kw">Balanced</span>: w={lat:0.50, sol:0.50, rad:0.50, wx:0.40}
-   → Chosen policy → RTT = <span class="ok">${d.rtt} ms</span>  (Pareto-optimal trade-off)</div>
+<span class="cmt">// Fastest for this request: ${(() => {
+  const e = Object.entries(d.counterfactual || {}).filter(([, v]) => Number.isFinite(v))
+  if (!e.length) return 'n/a'
+  const b = e.reduce((x, y) => y[1] < x[1] ? y : x)
+  return b[0] === d.policy ? `${b[0]} (the one you picked)` : `${b[0]} at ${b[1]} ms`
+})()}</span>
+<span class="cmt">// Terrestrial fibre baseline for ${d.city.city}: ${baseline} ms</span></div>
   </div>
 
   <div class="modal-section" id="s8">

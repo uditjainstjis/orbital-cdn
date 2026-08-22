@@ -132,19 +132,26 @@ export function fibreBaselineMs(city, procMs) {
 
 // ─── DC selection ──────────────────────────────────────────────────────────
 
-function dcCostMs(city, dc, w, prof) {
-  const learned = prof?.ready ? (prof.dcPenalty[dc.dcName] ?? 0) : 0
+export function dcCostMs(city, dc, w, prof) {
+  // Learned terms carry the coefficient of the objective they belong to:
+  // observed tail latency is a latency cost, observed SAA exposure is a
+  // radiation cost. Weighting radiation history by w.sol was a bug.
+  const lat = prof?.ready ? (prof.dcLatPenalty[dc.dcName] ?? 0) : 0
+  const rad = prof?.ready ? (prof.dcRadPenalty[dc.dcName] ?? 0) : 0
   return w.lat * reachMs(city.lat, city.lon, dc.lat, dc.lon)
        + w.sol * ECLIPSE_COST_MS * (dc.eclipsed ? 1 : 0)
        + w.rad * SAA_COST_MS     * (dc.inSAA   ? 1 : 0)
-       + w.sol * ADAPT_COST_MS   * ADAPT_GAIN * learned
+       + w.lat * ADAPT_COST_MS   * ADAPT_GAIN * lat
+       + w.rad * ADAPT_COST_MS   * ADAPT_GAIN * rad
 }
 
 function findBestDC(city, policy, dcList, prof) {
   const w = POLICY_WEIGHTS[policy]
   return dcList.reduce((best, dc) => {
     const cost    = dcCostMs(city, dc, w, prof)
-    const learned = prof?.ready ? (prof.dcPenalty[dc.dcName] ?? 0) : 0
+    const learned = prof?.ready
+      ? (prof.dcLatPenalty[dc.dcName] ?? 0) + (prof.dcRadPenalty[dc.dcName] ?? 0)
+      : 0
     return (!best || cost < best.cost)
       ? { ...dc, cost, dist: (haversine(city.lat, city.lon, dc.lat, dc.lon) / HALF_CIRCUM).toFixed(3), learned }
       : best
@@ -158,7 +165,7 @@ export function weatherMs(weather) {
   return weather === 'clear' ? 0 : weather === 'cloudy' ? 8 : 22
 }
 
-function gwCostMs(city, gw, w, prof) {
+export function gwCostMs(city, gw, w, prof) {
   const learned = prof?.ready ? (prof.gwPenalty[gw.name] ?? 0) : 0
   return w.lat * reachMs(city.lat, city.lon, gw.lat, gw.lon)
        + w.wx  * weatherMs(gw.weather)
@@ -251,11 +258,12 @@ export function runSimulation({ city, service, policy, sats, learnWindow = '7d' 
   // Scored with the SAME function that picks the route — dcCostMs — so the
   // deep-dive table can never rank a candidate above the one actually chosen.
   const allDCs  = dcList.map(dc => {
-    const learned = prof.ready ? (prof.dcPenalty[dc.dcName] ?? 0) : 0
+    const lrnL = prof.ready ? (prof.dcLatPenalty[dc.dcName] ?? 0) : 0
+    const lrnR = prof.ready ? (prof.dcRadPenalty[dc.dcName] ?? 0) : 0
     return {
       ...dc,
       scoreDist:    reachMs(city.lat, city.lon, dc.lat, dc.lon).toFixed(1),
-      scoreLearned: (w.sol * ADAPT_COST_MS * ADAPT_GAIN * learned).toFixed(1),
+      scoreLearned: (ADAPT_COST_MS * ADAPT_GAIN * (w.lat * lrnL + w.rad * lrnR)).toFixed(1),
       scoreTotal:   dcCostMs(city, dc, w, prof).toFixed(1),
     }
   })

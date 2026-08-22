@@ -43,7 +43,9 @@ function chartTraffic(series, bucket) {
   const W = 900, H = 260, PL = 52, PR = 46, PT = 18, PB = 30
   const iw = W - PL - PR, ih = H - PT - PB
 
-  const maxN   = Math.max(1, ...series.map(s => s.n))
+  // Scale to complete buckets only — a clipped edge bucket must not set the axis
+  const full   = series.filter(s => !s.partial)
+  const maxN   = Math.max(1, ...(full.length ? full : series).map(s => s.n))
   const rtts   = series.filter(s => s.n > 0)
   const maxRtt = Math.max(1, ...rtts.map(s => s.p95))
   const minRtt = Math.min(...rtts.map(s => s.p50), maxRtt)
@@ -57,8 +59,8 @@ function chartTraffic(series, bucket) {
 
   const bars = series.map((s, i) => {
     const h = s.n ? Math.max(2, PT + ih - yN(s.n)) : 0
-    return `<rect x="${(x(i) - bw / 2).toFixed(1)}" y="${(PT + ih - h).toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="url(#dashBar)">
-      <title>${fmtTick(s.t, bucket)} — ${s.n} requests</title></rect>`
+    return `<rect x="${(x(i) - bw / 2).toFixed(1)}" y="${(PT + ih - h).toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="url(#dashBar)"${s.partial ? ' opacity="0.4" stroke="rgba(0,212,255,0.35)" stroke-dasharray="2 2"' : ''}>
+      <title>${fmtTick(s.t, bucket)} — ${s.n} requests${s.partial ? ' (partial bucket — clipped by the window edge)' : ''}</title></rect>`
   }).join('')
 
   const linePts = (key) => rtts.length
@@ -100,6 +102,7 @@ function chartTraffic(series, bucket) {
     <span><i class="sw" style="background:#00d4ff"></i>Requests</span>
     <span><i class="sw" style="background:#f59e0b"></i>p50 RTT</span>
     <span><i class="sw sw-d" style="background:#ef4444"></i>p95 RTT</span>
+    ${series.some(s => s.partial) ? '<span style="opacity:.7">faded bars = partial bucket at the window edge</span>' : ''}
   </div>`
 }
 
@@ -172,7 +175,9 @@ function adaptivePanel(s) {
   }
 
   const gw = Object.entries(prof.gwPenalty).sort((a, b) => b[1] - a[1]).slice(0, 5)
-  const dc = Object.entries(prof.dcPenalty).sort((a, b) => b[1] - a[1])
+  const dc = Object.keys(prof.dcLatPenalty)
+    .map(k => [k, (prof.dcLatPenalty[k] ?? 0), (prof.dcRadPenalty[k] ?? 0)])
+    .sort((a, b) => (b[1] + b[2]) - (a[1] + a[2]))
   const cb = Object.entries(prof.cityBest)
 
   const bar = (v, color) => `<div class="pen-track"><div class="pen-fill" style="width:${v * 100}%;background:${color}"></div></div>`
@@ -184,7 +189,7 @@ function adaptivePanel(s) {
         <p class="adapt-sub">Learned from <b>${prof.sampleN}</b> requests in the last
         <b>${prof.widened ? WINDOWS.find(w => w.id === prof.usedWindow)?.label : s.label}</b>${prof.widened
           ? ` — the ${s.label} window held too few requests to learn from, so it widened automatically`
-          : ''}. These biases are applied to the next request you send.</p>
+          : ''}. The gateway and DC penalties are applied to the next request you send; the per-origin policy is surfaced as a recommendation only, so the control you selected keeps meaning what it says.</p>
       </div>
       ${adaptToggle(on)}
     </div>
@@ -194,11 +199,11 @@ function adaptivePanel(s) {
         ${gw.map(([k, v]) => `<div class="pen-row"><span>${k}</span>${bar(v, 'var(--blue)')}<b>${v.toFixed(2)}</b></div>`).join('')}
       </div>
       <div>
-        <div class="adapt-label">DC penalty · eclipse + radiation exposure</div>
-        ${dc.map(([k, v]) => `<div class="pen-row"><span>${k}</span>${bar(v, 'var(--amber)')}<b>${v.toFixed(2)}</b></div>`).join('')}
+        <div class="adapt-label">DC penalty · observed tail latency + SAA exposure</div>
+        ${dc.map(([k, l, r]) => `<div class="pen-row"><span>${k}</span>${bar(Math.min(1, l + r), 'var(--amber)')}<b>${(l + r).toFixed(2)}</b></div>`).join('')}
       </div>
       <div>
-        <div class="adapt-label">Empirically best policy per origin</div>
+        <div class="adapt-label">Best policy per origin · recommendation, not auto-applied</div>
         ${cb.length
           ? cb.map(([k, v]) => `<div class="pen-row pen-row-t"><span>${k}</span><b class="pol-chip">${v}</b></div>`).join('')
           : '<p class="adapt-sub">Not enough per-city coverage yet.</p>'}

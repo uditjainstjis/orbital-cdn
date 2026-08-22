@@ -11,8 +11,8 @@
 //   • gateway weather  — rain fronts that persist for hours, then clear
 // so the patterns the summary surfaces are genuinely in the data, not asserted.
 
-import { GATEWAYS, CITIES } from './network.js'
-import { POLICY_WEIGHTS, pathDistanceKm, fibreBaselineMs, haversine } from './engine.js'
+import { GATEWAYS, CITIES, gatewayWeather } from './network.js'
+import { POLICY_WEIGHTS, pathDistanceKm, fibreBaselineMs, dcCostMs, gwCostMs } from './engine.js'
 
 const SERVICES = [
   { service: 'LLM Inference', compute: 'high',   w: 0.34 },
@@ -96,41 +96,29 @@ function demandAt(lon, ts) {
   return 0.12 + 0.95 * morning + 1.15 * evening
 }
 
-/**
- * Weather at a gateway: a slow front that persists for hours.
- * Each gateway has a base wetness; a smooth pseudo-noise field crosses it.
- */
-function weatherAt(gw, ts, seedRnd) {
-  const base = gw.weather === 'rain' ? 0.55 : gw.weather === 'cloudy' ? 0.34 : 0.10
-  // 6-hourly blocks, hashed per gateway → fronts that last, not per-request flicker
-  const block = Math.floor(ts / (6 * 3600e3))
-  const h     = mulberry32(block * 2654435761 + seedRnd)()
-  const wet   = base + (h - 0.5) * 0.5
-  return wet > 0.62 ? 'rain' : wet > 0.34 ? 'cloudy' : 'clear'
-}
+// ─── Selection: the engine's own scoring functions, not a re-implementation ──
 
-// ─── Selection, mirroring engine.js ────────────────────────────────────────
-
+// History must be produced by the SAME decision rule the live router uses.
+// A generator with its own cost function makes the analytics circular in the
+// worst way: the dashboard would be reading back a different model's opinions.
 function chooseDC(city, policy, ts) {
   const w = POLICY_WEIGHTS[policy]
   return DCS.map(dc => {
-    const lon  = dcLonAt(dc, ts)
-    const ecl  = isEclipsed(lon, ts)
-    const saa  = inSAA(dc.lat, lon)
-    const dist = haversine(city.lat, city.lon, dc.lat, lon) / HALF_CIRCUM
-    const cost = w.lat * dist + w.sol * (ecl ? 1 : 0) + w.rad * (saa ? 1 : 0)
-    return { dcName: dc.dcName, lat: dc.lat, lon, ecl, saa, cost }
+    const lon = dcLonAt(dc, ts)
+    const cand = {
+      dcName: dc.dcName, lat: dc.lat, lon,
+      eclipsed: isEclipsed(lon, ts),
+      inSAA:    inSAA(dc.lat, lon),
+    }
+    return { ...cand, ecl: cand.eclipsed, saa: cand.inSAA, cost: dcCostMs(city, cand, w, null) }
   }).reduce((best, d) => (!best || d.cost < best.cost) ? d : best, null)
 }
 
-function chooseGateway(city, policy, ts, gwSeed) {
+function chooseGateway(city, policy, ts) {
   const w = POLICY_WEIGHTS[policy]
   return GATEWAYS.map(gw => {
-    const wx        = weatherAt(gw, ts, gwSeed)
-    const dist      = haversine(city.lat, city.lon, gw.lat, gw.lon) / HALF_CIRCUM
-    const wxPenalty = wx === 'clear' ? 0 : wx === 'cloudy' ? 0.5 : 1.0
-    const cost      = w.lat * dist + w.wx * wxPenalty
-    return { name: gw.name, wx, cost }
+    const cand = { ...gw, weather: gatewayWeather(gw, ts) }
+    return { name: gw.name, wx: cand.weather, cost: gwCostMs(city, cand, w, null) }
   }).reduce((best, g) => (!best || g.cost < best.cost) ? g : best, null)
 }
 
@@ -166,7 +154,7 @@ export function generateHistory({ days = 30, perDay = 42, now = Date.now(), seed
       const policy = pickWeighted(rnd, POLICIES).policy
 
       const dc = chooseDC(city, policy, ts)
-      const gw = chooseGateway(city, policy, ts, seed)
+      const gw = chooseGateway(city, policy, ts)
 
       // Uplink satellite: overhead the origin, within the 25 deg elevation mask
       const uplink = {

@@ -4,7 +4,7 @@ import * as THREE from 'three'
 import { initInsights } from './insights.js'
 import { initGlobe, getWorld, updateEarth, toggleClouds, toggleNightLights } from './globe.js'
 import { initSatellites, updateSatellites, sats, satBodyMeshes, sunlitDCCount, toggleISL } from './sats.js'
-import { initNetwork, setSelectedCity, toggleSAA } from './network.js'
+import { initNetwork, setSelectedCity, toggleSAA, updateWeather } from './network.js'
 import { runSimulation } from './engine.js'
 import {
   runSequence, setSpeed, skipSequence, isRunning, setCallbacks, SPEED,
@@ -97,6 +97,11 @@ async function main() {
     updateEarth()
     updateSatellites(world)
   })()
+
+  // Gateway weather advances in 6-hour blocks; re-resolve periodically so a
+  // long-lived session sees conditions actually change rather than sit frozen.
+  updateWeather()
+  setInterval(() => updateWeather(), 30_000)
 
   // 7. Wiring: send button
   let lastData = null
