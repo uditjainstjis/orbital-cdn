@@ -88,7 +88,7 @@ export function renderAutopilot() {
         ${last.event === 'REROUTE' || last.event === 'PROPOSED'
           ? `${last.from} → ${last.to}` : (last.reason || '')}
         ${last.verified ? `<span class="ap-verdict ${last.verified.beneficial ? 'good' : 'bad'}">
-            ${last.verified.beneficial ? '✓ degradation confirmed' : '<i data-ic="cross"></i> no degradation'}</span>` : ''}
+            ${last.verified.beneficial ? '<i data-ic="check" data-size="12"></i> degradation confirmed' : '<i data-ic="cross"></i> no degradation'}</span>` : ''}
       </div>` : ''}
 
     <div class="ap-foot">

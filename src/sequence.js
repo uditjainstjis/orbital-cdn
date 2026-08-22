@@ -179,7 +179,7 @@ export async function runSequence(data, world) {
       : saaCross > 0 && policy === 'reliable'
         ? `SAA-crossing hops detected (${saaCross}) — rerouting around radiation zone.`
         : `Path minimises energy + SAA exposure. Cross-plane ISLs disabled above |lat| 60° (pole instability).`,
-    hl: `100 Gbps laser ISL · ${saaCross} SAA crossing${saaCross !== 1 ? 's' : ''} ${policy !== 'latency' && saaCross === 0 ? 'avoided ✓' : ''}`,
+    hl: `100 Gbps laser ISL · ${saaCross} SAA crossing${saaCross !== 1 ? 's' : ''} ${policy !== 'latency' && saaCross === 0 ? 'avoided <i data-ic="check" data-size="12"></i>' : ''}`,
     hlColor: '#00ff88', step: 4,
   })
   await sleep(600)

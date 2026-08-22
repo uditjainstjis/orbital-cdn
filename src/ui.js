@@ -347,7 +347,7 @@ score = <span class="val">${w.lat}</span>·dist + <span class="val">${w.wx}</spa
         <h5><i data-ic="radiation"></i> South Atlantic Anomaly</h5>
         <p>Inner Van Allen belt dips to ~200 km. Bounding box: lat [−50°, 0°], lon [−80°, +10°]. ${d.saaCross} ISL hop(s) crossed SAA on this path.</p>
         <p style="margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:11px;color:${d.saaCross > 0 ? 'var(--red)' : 'var(--green)'}">
-          ${d.saaCross > 0 ? `${d.saaCross} crossings — radiation penalty active` : '0 crossings — SAA fully avoided ✓'}
+          ${d.saaCross > 0 ? `${d.saaCross} crossings — radiation penalty active` : '0 crossings — SAA fully avoided <i data-ic="check" data-size="12"></i>'}
         </p>
       </div>
       <div class="phys-card">
@@ -443,7 +443,7 @@ export function showInspector(node, x, y) {
         <div style="width:${(node.battery*100).toFixed(0)}%;height:100%;background:${node.battery>0.4?'var(--green)':'var(--amber)'};border-radius:2px"></div>
       </div>
       <div class="inspector-row"><span class="inspector-key">Compute</span><span class="inspector-val">${(node.load*100).toFixed(0)}% load</span></div>
-      <div class="inspector-row"><span class="inspector-key">Radiation</span><span class="inspector-val" style="color:${node.inSAA?'var(--red)':'var(--green)'}">${node.inSAA?'<i data-ic="warning"></i> SAA':'✓ clean'}</span></div>
+      <div class="inspector-row"><span class="inspector-key">Radiation</span><span class="inspector-val" style="color:${node.inSAA?'var(--red)':'var(--green)'}">${node.inSAA?'<i data-ic="warning"></i> SAA':'<i data-ic="check" data-size="12"></i> clean'}</span></div>
       <div style="margin-top:8px;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace">Plane ${node.plane} · Slot ${node.slot} · ID ${node.id}</div>
     `
   } else if (node.name) {
