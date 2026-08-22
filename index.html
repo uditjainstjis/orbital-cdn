@@ -24,6 +24,7 @@
         <span class="badge badge-time" id="utc-clock">UTC 00:00:00</span>
         <span class="badge badge-adaptive" id="adaptive-badge">◈ ADAPTIVE</span>
         <button class="badge dash-open-btn" id="dash-btn">📊 Network Analytics</button>
+        <button class="badge ap-open-btn" id="autopilot-btn">🛰 Autopilot</button>
         <button class="badge insights-btn" id="insights-btn">📐 Architecture &amp; Insights</button>
       </div>
     </div>
@@ -127,6 +128,12 @@
       </div>
     </div>
 
+    <!-- Orbital Autopilot — always visible, no click required -->
+    <div id="autopilot-panel" class="glass-panel">
+      <div class="panel-label" style="margin-bottom:9px">🛰 Orbital Autopilot</div>
+      <div id="autopilot-body"></div>
+    </div>
+
     <!-- Layer toggles -->
     <div id="layer-controls" class="glass-panel layers">
       <div class="panel-label" style="margin-bottom:8px">Layers</div>
@@ -183,6 +190,17 @@
         <div class="modal-nav" id="modal-nav"></div>
         <div id="modal-body" class="modal-body"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- Autopilot detail overlay -->
+  <div id="ap-overlay" class="hidden">
+    <div id="dash-panel">
+      <div id="dash-topbar">
+        <div class="dash-logo">◎ ORBITAL CDN <span>/ Autopilot</span></div>
+        <button class="dash-close" id="ap-overlay-close">✕ Close</button>
+      </div>
+      <div id="ap-overlay-body" class="dash-scroll"></div>
     </div>
   </div>
 

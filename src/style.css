@@ -1487,3 +1487,99 @@ html, body {
 .idle-cta:hover { background: linear-gradient(135deg, rgba(0,212,255,0.32), rgba(124,58,237,0.3)); }
 .idle-foot { font-size: 10px; color: var(--muted); margin-top: 9px; line-height: 1.5; text-align: center; }
 .idle-foot b { color: #9fb2c8; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ORBITAL AUTOPILOT
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.ap-open-btn {
+  background: linear-gradient(135deg, rgba(124,58,237,0.2), rgba(0,212,255,0.14));
+  border-color: rgba(124,58,237,0.45); color: #c4b5fd; cursor: pointer; font-weight: 600;
+}
+.ap-open-btn:hover { background: rgba(124,58,237,0.3); border-color: #a78bfa; }
+
+/* Sits to the RIGHT of the control panel: the left column already runs to the
+   bottom of the viewport, and overlapping it hid the policy weight bars. */
+#autopilot-panel {
+  position: absolute; left: 332px; bottom: 20px; width: 288px; z-index: 900;
+  padding: 13px 15px 12px; border-radius: 12px; max-height: 52vh; overflow-y: auto;
+}
+#autopilot-panel::-webkit-scrollbar { width: 4px; }
+#autopilot-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.ap-modes { display: flex; gap: 3px; background: rgba(0,0,0,0.4); padding: 3px; border-radius: 8px; margin-bottom: 11px; }
+.ap-mode {
+  flex: 1; background: transparent; border: none; color: var(--muted); cursor: pointer;
+  padding: 6px 4px; border-radius: 6px; font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px; letter-spacing: 0.06em; font-weight: 600; transition: all .15s;
+}
+.ap-mode:hover { color: var(--text); }
+.ap-mode.on { background: rgba(124,58,237,0.25); color: #c4b5fd; box-shadow: inset 0 0 0 1px rgba(124,58,237,0.5); }
+
+.ap-cur { margin-bottom: 9px; }
+.ap-cur-lbl { display: block; font-size: 8.5px; color: var(--muted); letter-spacing: 0.12em; margin-bottom: 3px; }
+.ap-cur b { font-size: 14px; color: var(--text); }
+.ap-fade { display: block; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+.ap-timeline { display: flex; gap: 6px; align-items: flex-end; height: 54px; margin-bottom: 6px; }
+.tl-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; }
+.tl-bar { flex: 1; width: 100%; background: rgba(0,0,0,0.4); border-radius: 3px; display: flex; align-items: flex-end; overflow: hidden; }
+.tl-fill { width: 100%; border-radius: 3px; transition: height .45s cubic-bezier(.4,0,.2,1); }
+.tl-lbl { font-family: 'JetBrains Mono', monospace; font-size: 8.5px; color: var(--muted); }
+
+.ap-note { font-size: 9.5px; color: var(--muted); line-height: 1.45; }
+
+.ap-alert {
+  margin-top: 9px; padding: 7px 9px; border-radius: 7px; font-size: 10.5px;
+  background: rgba(245,158,11,0.1); border-left: 2px solid var(--amber); color: #fcd34d;
+}
+.ap-alert b { color: #fde68a; }
+
+.ap-pending {
+  margin-top: 10px; padding: 9px 10px; border-radius: 8px;
+  background: rgba(124,58,237,0.12); border: 1px solid rgba(124,58,237,0.4);
+}
+.ap-pending-t { font-size: 8.5px; letter-spacing: 0.1em; color: #c4b5fd; margin-bottom: 5px; }
+.ap-pending-b { font-size: 10.5px; color: #cbd5e1; line-height: 1.5; }
+.ap-pending-b b { color: var(--text); }
+.ap-pending-a { display: flex; gap: 6px; margin-top: 8px; }
+.ap-btn {
+  flex: 1; padding: 6px; border-radius: 6px; cursor: pointer; font-family: inherit;
+  font-size: 10.5px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--text);
+}
+.ap-btn:hover { border-color: var(--cyan); }
+.ap-ok { background: rgba(16,185,129,0.16); border-color: rgba(16,185,129,0.5); color: #6ee7b7; }
+
+.ap-last { margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--border); font-size: 10px; color: #9fb2c8; line-height: 1.5; }
+.ap-ev {
+  display: inline-block; padding: 1px 6px; border-radius: 4px; margin-right: 6px;
+  font-family: 'JetBrains Mono', monospace; font-size: 8.5px; letter-spacing: 0.06em;
+}
+.ap-ev-reroute  { background: rgba(124,58,237,0.25); color: #c4b5fd; }
+.ap-ev-proposed { background: rgba(245,158,11,0.2);  color: #fcd34d; }
+.ap-ev-rejected { background: rgba(74,95,122,0.25);  color: var(--muted); }
+.ap-verdict { display: block; margin-top: 3px; font-size: 9.5px; }
+.ap-verdict.good { color: var(--green); }
+.ap-verdict.bad  { color: #f87171; }
+
+.ap-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+.ap-link { background: none; border: none; color: var(--cyan); cursor: pointer; font-family: inherit; font-size: 10.5px; padding: 0; }
+.ap-link:hover { text-decoration: underline; }
+.ap-clock { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--muted); }
+
+.ap-scenarios { display: flex; gap: 8px; flex-wrap: wrap; }
+.ap-log { display: flex; flex-direction: column; gap: 7px; }
+.ap-log-row {
+  display: grid; grid-template-columns: 78px 1fr 62px; gap: 9px; align-items: start;
+  padding: 8px 10px; border-radius: 7px; background: rgba(0,0,0,0.28); font-size: 11px;
+}
+.ap-log-body { color: #b8c7db; line-height: 1.5; }
+.ap-log-body b { color: var(--text); }
+.ap-log-t { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: var(--muted); text-align: right; }
+.dash-scroll { flex: 1; overflow-y: auto; padding: 26px 28px 40px; }
+.dash-scroll::-webkit-scrollbar { width: 6px; }
+.dash-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+@media (max-width: 1180px) {
+  #autopilot-panel { display: none; }
+}

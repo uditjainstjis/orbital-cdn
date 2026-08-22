@@ -18,6 +18,11 @@ import {
 import { initDashboard, renderDashboard, getLearnWindow, openDashboard, renderIdleSummary } from './dashboard.js'
 import { record, eventCount, seedEvents, adaptiveEnabled, summarize } from './telemetry.js'
 import { generateHistory } from './seed.js'
+import { initAutopilot, renderAutopilot } from './predict/ui.js'
+import * as agentApi from './predict/agent.js'
+import * as weatherApi from './predict/weather.js'
+import { adaptiveProfile } from './telemetry.js'
+const { setCurrentGateway } = agentApi
 
 // ─── Product state bootstrap ──────────────────────────────────────────────
 // The network ships with its own operating history so the analytics view is
@@ -66,6 +71,25 @@ async function main() {
   updateAdaptiveBadge()
   initIntro()
   renderIdleSummary()
+
+  // Debug/demo handle. Exposes the app's OWN module instances so a scenario can
+  // be driven reproducibly from the console — importing the modules separately
+  // yields different instances under the dev server and silently does nothing.
+  window.__ocdn = {
+    agent: agentApi,
+    weather: weatherApi,
+    context: () => ({ city: selectedCity, policy, prof: adaptiveProfile(getLearnWindow()) }),
+    renderAutopilot,
+  }
+
+  // Autopilot: its own decision cadence, never tied to the render loop.
+  initAutopilot({
+    getContext: () => ({
+      city: selectedCity,
+      policy,
+      prof: adaptiveProfile(getLearnWindow()),
+    }),
+  })
   initCityGrid(city => {
     setSelectedCity(city.city, world)
     if (!isRunning()) world.pointOfView({ lat: city.lat, lng: city.lon, altitude: 1.8 }, 1200)
@@ -123,6 +147,8 @@ async function main() {
 
     // Persist the outcome — this request is now part of what the network learns from
     record(data, { adaptive: data.adaptive })
+    setCurrentGateway(data.gw.name)
+    renderAutopilot()
     updateAdaptiveBadge()
     lastData = data
 

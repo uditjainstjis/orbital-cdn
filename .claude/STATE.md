@@ -110,3 +110,57 @@ Other corrections from the grounding pass:
 ## Standing orders
 - Do not claim a ceiling; attack it with an agent first.
 - Every number a decision turns on gets read first-hand, not via an agent summary.
+
+## Predictive layer + autonomous ops (branch `predictive-ops`, 2026-08-22)
+
+**Rejected from the supplied spec, with reasons:**
+- *Train on TinyGS to predict Ka-band gateway rain degradation.* TinyGS is LoRa at ~437 MHz.
+  ITU-R P.838-3 Table 5: rain coefficient k = **0.0000259 at 1 GHz vs 0.0916 at 20 GHz**. The
+  dataset physically cannot contain the signal the spec wants learned from it.
+- *ML for rain fade.* Solved analytically by ITU-R P.618/838/839 — implemented exactly instead.
+- *FastAPI backend.* Would break the static deploy and add the demo's only runtime dependency.
+  Model is exported to JSON (71 KB) and evaluated in-browser.
+- Not built: SatNOGS/Space-Track adapters, IMERG auth pipeline, historical-TLE reconstruction,
+  LSTM/TCN, spacecraft-anomaly model, LLM explanation layer.
+
+**Built:**
+- `src/predict/itu.js` — P.838-3 + P.618-13 + P.839-4. `npm run test:itu` reproduces all
+  **28 published Table 5 coefficients** at 1/12/19/20/25/28/30 GHz within 2%.
+- `src/predict/weather_trace.json` — **real** NASA POWER hourly precipitation, 8 real teleport
+  sites, 2,928 h each (Apr–Jul 2026). Unit trap: POWER hourly `PRECTOTCORR` is **mm/day**, /24.
+- `src/predict/fade_model.json` — LightGBM, trained offline, time-split + unseen-site split.
+- `src/predict/{gbm,weather,agent,experiment,ui,config}.js`
+
+**Measured — model (held-out, time-split):**
+| horizon | persistence AUC / Brier | LightGBM AUC / Brier |
+|---|---|---|
+| +1h  | 0.998 / 0.0294 | 0.999 / **0.0030** |
+| +3h  | 0.990 / 0.0290 | 0.991 / **0.0071** |
+| +6h  | 0.973 / 0.0307 | 0.949 / **0.0139** |
+| +12h | 0.944 / 0.0329 | 0.892 / **0.0271** |
+
+Persistence wins ranking at long horizons; the model wins **calibration** everywhere (2–10x
+Brier). Calibration is what a router needs because it multiplies P(outage) by a cost.
+
+**Measured — paired 4-arm experiment (5,600 requests, 2,800 recorded hours, identical schedule):**
+- A CURRENT (blind): **80 failures**, mean 4.0 ms
+- R REACTIVE (sees fade now): **2 failures**, mean 3.7 ms
+- B PREDICTIVE (sees forecast): **0 failures**, mean 3.9 ms
+- C AUTOPILOT (sticky + agent): **0 failures**, mean 9.2 ms, 9 reroutes (7 proactive)
+
+**The honest finding: most of the benefit is from OBSERVING, not forecasting** — 78 of 80
+failures removed by reacting to current fade; forecasting removes the last 2.
+**Negative result:** the agent matches predictive routing on failures but costs +5.3 ms mean
+latency, because hysteresis on a sticky route buys nothing when re-selection is free.
+
+**Bugs found and fixed during this work:**
+- `predictiveCostMs` returned 0 when no horizons were supplied, silently discarding the
+  observed-fade term — this made the REACTIVE control arm identical to CURRENT and would have
+  shipped as a false finding.
+- The A/B/C agent arm used one global sticky gateway for all 8 origins; now per-origin.
+- Agent tick re-rendered the overlay and wiped experiment results; result is now cached.
+- Autopilot panel overlapped the left control column, hiding the policy weight bars.
+
+**Only Singapore produces fade above the 6 dB margin in this trace** (19% of hours, max 19.9 dB);
+Mumbai/Tokyo/Lagos a handful; Frankfurt/Virginia/Sao Paulo/Sydney never. That bounds how much
+any weather-aware routing can help, and it is why the experiment runs the full trace.
