@@ -233,6 +233,8 @@ export function summarize(windowId, now = Date.now()) {
     windowId,
     label:  w.label,
     bucket: w.bucket,
+    seeded: events.filter(e => e.synthetic).length,
+    live:   events.filter(e => !e.synthetic).length,
     from, to: now,
     events,
     overall,
@@ -285,7 +287,7 @@ function deriveInsights({ events, overall, byPolicy, byGateway, byDC, byCity }) 
 
   // 3. Eclipse exposure
   const eclWorst = [...byDC].filter(d => d.n >= 3).sort((a, b) => b.eclShare - a.eclShare)[0]
-  if (eclWorst && eclWorst.eclShare > 0.15) {
+  if (eclWorst && eclWorst.eclShare > 0.08) {
     out.push({
       kind: 'warn',
       text: `<b>${eclWorst.key}</b> served <b>${(eclWorst.eclShare * 100).toFixed(0)}%</b> of its requests while eclipsed — battery-drawn, not solar. Green policy should be de-preferring it in this window.`,
@@ -340,9 +342,24 @@ function deriveInsights({ events, overall, byPolicy, byGateway, byDC, byCity }) 
  * Returns penalty multipliers keyed by gateway name and DC name, plus the
  * per-city policy that empirically won.
  */
+const MIN_LEARN_N = 8
+
 export function adaptiveProfile(windowId, now = Date.now()) {
-  const events = eventsInWindow(windowId, now)
-  if (events.length < 8) return { ready: false, gwPenalty: {}, dcPenalty: {}, cityBest: {}, sampleN: events.length }
+  // A short window can hold too little traffic to learn from. Rather than
+  // silently dropping back to fixed policy, widen to the next window that has
+  // enough history and say so — the UI reports which window was actually used.
+  const order = WINDOWS.map(w => w.id)
+  let usedId  = windowId
+  let events  = eventsInWindow(windowId, now)
+  if (events.length < MIN_LEARN_N) {
+    for (const id of order.slice(order.indexOf(windowId) + 1)) {
+      const wider = eventsInWindow(id, now)
+      if (wider.length >= MIN_LEARN_N) { usedId = id; events = wider; break }
+    }
+  }
+  if (events.length < MIN_LEARN_N) {
+    return { ready: false, gwPenalty: {}, dcPenalty: {}, cityBest: {}, sampleN: events.length, usedWindow: usedId, widened: false }
+  }
 
   const gwPenalty = {}
   groupBy(events, e => e.gw).forEach((v, k) => {
@@ -367,5 +384,5 @@ export function adaptiveProfile(windowId, now = Date.now()) {
     if (byPol.length) cityBest[k] = byPol[0].p
   })
 
-  return { ready: true, gwPenalty, dcPenalty, cityBest, sampleN: events.length }
+  return { ready: true, gwPenalty, dcPenalty, cityBest, sampleN: events.length, usedWindow: usedId, widened: usedId !== windowId }
 }

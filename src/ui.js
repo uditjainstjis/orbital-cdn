@@ -241,7 +241,7 @@ W_penalty = <span class="val">${wxMs}</span> ms
 
 <span class="cmt">// Total RTT:</span>
 RTT = ${(propVac * 2).toFixed(1)} + ${procMs} + ${wxMs} = <span class="ok">${rtt} ms</span>
-RTT_baseline = <span class="val">${baseline} ms</span>  Stretch = <span class="val">+${stretch}%</span></div>
+RTT_fibre_baseline = <span class="val">${baseline} ms</span>  Delta = <span class="val">${stretch > 0 ? '+' : ''}${stretch}%</span></div>
   </div>
 
   <div class="modal-section" id="s2">
@@ -288,7 +288,7 @@ score = <span class="val">${w.lat}</span>·dist + <span class="val">${w.sol}</sp
         </tr>`).join('')}
       </tbody>
     </table>
-    <p style="font-size:11px;color:var(--muted);margin-top:10px">${d.sunlitDCs} of 3 orbital DCs currently sunlit. ${d.dc.eclipsed ? 'No sunlit DC available — chose best-battery eclipse DC.' : 'Sunlit DC chosen — free solar compute.'}</p>
+    <p style="font-size:11px;color:var(--muted);margin-top:10px">${d.sunlitDCs} of 4 orbital DCs currently sunlit. ${d.dc.eclipsed ? 'No sunlit DC scored best — this one is eclipsed, drawing stored charge.' : 'Sunlit DC chosen — compute on live solar, no battery draw.'}</p>
   </div>
 
   <div class="modal-section" id="s4">

@@ -248,15 +248,15 @@ export function runSimulation({ city, service, policy, sats, learnWindow = '7d' 
   const uplink = findNearestSat(city.lat, city.lon, sats)
 
   // Step 2: Best DC
+  // Scored with the SAME function that picks the route — dcCostMs — so the
+  // deep-dive table can never rank a candidate above the one actually chosen.
   const allDCs  = dcList.map(dc => {
-    const dist  = Math.abs(((dc.lon - city.lon + 540) % 360) - 180) / 180
-    const cost  = w.lat * dist + w.sol * (dc.eclipsed ? 1 : 0) + w.rad * (dc.inSAA ? 1 : 0)
     const learned = prof.ready ? (prof.dcPenalty[dc.dcName] ?? 0) : 0
     return {
       ...dc,
-      scoreDist:    dist.toFixed(3),
-      scoreLearned: learned.toFixed(3),
-      scoreTotal:   cost.toFixed(1),
+      scoreDist:    reachMs(city.lat, city.lon, dc.lat, dc.lon).toFixed(1),
+      scoreLearned: (w.sol * ADAPT_COST_MS * ADAPT_GAIN * learned).toFixed(1),
+      scoreTotal:   dcCostMs(city, dc, w, prof).toFixed(1),
     }
   })
   const dc = findBestDC(city, policy, dcList, prof)
@@ -274,16 +274,13 @@ export function runSimulation({ city, service, policy, sats, learnWindow = '7d' 
 
   // Step 4: Gateway
   const allGWs = GATEWAYS.map(gw => {
-    const dist      = (Math.abs(gw.lat - city.lat) + Math.abs(gw.lon - city.lon)) / 360
-    const wxPenalty = gw.weather === 'clear' ? 0 : gw.weather === 'cloudy' ? 0.5 : 1.0
-    const cost      = w.lat * dist + w.wx * wxPenalty
     const learned = prof.ready ? (prof.gwPenalty[gw.name] ?? 0) : 0
     return {
       ...gw,
-      scoreDist:    dist.toFixed(3),
-      scoreWx:      wxPenalty.toFixed(1),
-      scoreLearned: learned.toFixed(3),
-      scoreTotal:   cost.toFixed(1),
+      scoreDist:    reachMs(city.lat, city.lon, gw.lat, gw.lon).toFixed(1),
+      scoreWx:      weatherMs(gw.weather).toFixed(1),
+      scoreLearned: (w.wx * ADAPT_COST_MS * ADAPT_GAIN * learned).toFixed(1),
+      scoreTotal:   gwCostMs(city, gw, w, prof).toFixed(1),
     }
   })
   const gw    = findBestGateway(city, policy, prof)

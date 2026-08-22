@@ -1419,3 +1419,14 @@ html, body {
   .intro-title { font-size: 20px; }
   .intro-btn { flex: 1 1 100%; }
 }
+
+.dash-prov {
+  font-size: 11px; color: var(--muted); margin-top: 7px; line-height: 1.6; max-width: 90ch;
+}
+.dash-prov b { color: #8fa5bd; font-family: 'JetBrains Mono', monospace; }
+.prov-chip {
+  display: inline-block; padding: 2px 7px; border-radius: 4px; margin-right: 7px;
+  font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.1em;
+  border: 1px solid rgba(245,158,11,0.4); color: var(--amber); background: rgba(245,158,11,0.08);
+}
+.dash-caption { caption-side: top; text-align: left; font-size: 10.5px; color: var(--muted); padding-bottom: 8px; }

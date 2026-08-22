@@ -3,7 +3,8 @@
 
 import { gwWeatherColor } from './network.js'
 
-export let SPEED    = 1     // multiplier: 0.5 / 1 / 2
+export let SPEED    = 2     // multiplier: 0.5 / 1 / 2 — defaults fast; a 24 s
+                            // cinematic is 40% of the attention budget a judge has
 export let skipping = false
 
 let seqActive = false
@@ -121,14 +122,14 @@ export async function runSequence(data, world) {
   const dcNote = policy === 'latency'
     ? 'Nearest DC selected (latency-first — ignoring solar/SAA).'
     : policy === 'green'
-      ? (dc.eclipsed ? 'No sunlit DC reachable — using best-battery eclipse DC.' : '☀️ Sunlit DC selected — compute runs on free solar power.')
+      ? (dc.eclipsed ? 'No sunlit DC scored best — this one is eclipsed and running on stored charge.' : '☀️ Sunlit DC selected — compute runs on live solar, no battery draw.')
       : policy === 'reliable'
         ? (dc.inSAA ? '⚠️ All SAA-free DCs too far — accepted radiation risk.' : 'SAA-free DC chosen — hardware radiation safe.')
         : `${dc.eclipsed ? '🔋 Battery' : '☀️ Sunlit'} DC via balanced multi-objective cost.`
 
   _addDecision({
     icon: '🛰️', bg: 'rgba(245,158,11,0.15)', title: `Orbital DC Selected: ${dc.dcName}`,
-    body: dcNote + ` Battery SoC: ${(dc.battery * 100).toFixed(0)}%. Current load: ${(dc.load * 100).toFixed(0)}%.`,
+    body: dcNote + ` Battery SoC ${(dc.battery * 100).toFixed(0)}%. Winning cost <b>${(+dc.cost).toFixed(1)} ms</b> of latency-equivalent penalty, against ${data.allDCs.length - 1} alternatives.`,
     hl: dc.eclipsed ? '🌑 ECLIPSED — battery drain active' : '☀️ SUNLIT — solar powered',
     hlColor: dc.eclipsed ? '#ef4444' : '#f59e0b', step: 3,
   })
@@ -201,8 +202,8 @@ export async function runSequence(data, world) {
   await sleep(700)
 
   const gwNote = gw.weather === 'clear'
-    ? `<b>${gw.name}</b> has clear skies — optical Ka-band downlink at full capacity.`
-    : `Site diversity triggered. Nearest gateway had weather issues → rerouted to <b>${gw.name}</b>.`
+    ? `<b>${gw.name}</b> has clear skies — Ka-band downlink at full capacity.`
+    : `<b>${gw.name}</b> scored best despite ${gw.weather} — the ${gw.weather === 'rain' ? '22' : '8'} ms fade still beat the alternatives on total cost.`
 
   _addDecision({
     icon: '🌍', bg: 'rgba(16,185,129,0.15)', title: `Gateway: ${gw.name}`,
@@ -211,6 +212,33 @@ export async function runSequence(data, world) {
     hlColor: gwWeatherColor(gw.weather), step: 6,
   })
   await sleep(3400)
+
+  // ── BEAT 6b: What history contributed to this decision ───────────────
+  // Adaptation has to be observable per request, not just claimed in a panel.
+  if (data.adaptive && data.profile?.ready) {
+    const p        = data.profile
+    const gwPen    = p.gwPenalty[gw.name] ?? 0
+    const worstGw  = Object.entries(p.gwPenalty).sort((a, b) => b[1] - a[1])[0]
+    const avoided  = worstGw && worstGw[0] !== gw.name && worstGw[1] > 0.2
+    const recommend = p.cityBest[city.city]
+
+    _setTicker(`🧠 Applying ${p.sampleN} requests of observed history to this route…`)
+    _addDecision({
+      icon: '🧠', bg: 'rgba(124,58,237,0.16)', title: 'Adaptation Applied',
+      body: `Learned from <b>${p.sampleN}</b> logged requests. `
+          + (avoided
+              ? `<b>${worstGw[0]}</b> carries a <b>${worstGw[1].toFixed(2)}</b> observed rain-fade penalty, so it was down-weighted; <b>${gw.name}</b> won instead (penalty ${gwPen.toFixed(2)}).`
+              : `<b>${gw.name}</b> carries an observed penalty of <b>${gwPen.toFixed(2)}</b> — low enough that history did not override the geometry here.`)
+          + (recommend && recommend !== policy
+              ? ` Over this window, <b>${recommend}</b> has delivered the best p95 for ${city.city}.`
+              : ''),
+      hl: recommend && recommend !== policy
+            ? `Recommendation: try ${recommend} for ${city.city}`
+            : `History confirmed the ${policy} choice`,
+      hlColor: '#a78bfa', step: 7,
+    })
+    await sleep(2600)
+  }
 
   // ── BEAT 7: Downlink + return (2.5 s) ────────────────────────────────
   _setTicker(`↩️ Return path: ${dc.dcName} → ${gw.name} → ${city.city}`)
@@ -250,7 +278,7 @@ export async function runSequence(data, world) {
   _addDecision({
     icon: '✅', bg: 'rgba(0,212,255,0.12)', title: 'Request Complete',
     body: `Processed at ${dc.dcName}. Returned via ${gw.name}. Vacuum ISL saved ~${saving} ms vs terrestrial fiber.`,
-    hl: `RTT ${rtt} ms · +${stretch}% vs latency-only · ${dc.eclipsed ? '🔋 Battery' : '☀️ Solar'}`,
+    hl: `RTT ${rtt} ms · ${stretch <= 0 ? `${Math.abs(stretch)}% faster than fibre` : `${stretch}% slower than fibre`} · ${dc.eclipsed ? '🔋 Battery' : '☀️ Solar'}`,
     hlColor: '#00d4ff', step: 8,
   })
 

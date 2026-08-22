@@ -13,6 +13,7 @@ import {
 
 let currentWindow = '7d'
 let onDataChange  = () => {}
+let onReset       = () => {}
 
 // ─── Formatting ────────────────────────────────────────────────────────────
 
@@ -180,7 +181,10 @@ function adaptivePanel(s) {
     <div class="adapt-head">
       <div>
         <h3>Adaptation from this window</h3>
-        <p class="adapt-sub">Learned from <b>${prof.sampleN}</b> requests in the last <b>${s.label}</b>. These biases are applied to the next request you send.</p>
+        <p class="adapt-sub">Learned from <b>${prof.sampleN}</b> requests in the last
+        <b>${prof.widened ? WINDOWS.find(w => w.id === prof.usedWindow)?.label : s.label}</b>${prof.widened
+          ? ` — the ${s.label} window held too few requests to learn from, so it widened automatically`
+          : ''}. These biases are applied to the next request you send.</p>
       </div>
       ${adaptToggle(on)}
     </div>
@@ -213,9 +217,11 @@ function adaptToggle(on) {
 
 function comparePanel(s) {
   const a = s.adaptiveSplit.adaptive, f = s.adaptiveSplit.fixed
-  if (!a.n || !f.n) {
-    return `<p class="dash-note">Send requests with adaptive routing on and off to populate an A/B comparison for this window.
-      Currently <b>${a.n}</b> adaptive vs <b>${f.n}</b> fixed-policy requests.</p>`
+  const MIN = 8
+  if (a.n < MIN || f.n < MIN) {
+    return `<p class="dash-note">Needs at least <b>${MIN}</b> requests on each side before a comparison means anything.
+      Currently <b>${a.n}</b> adaptive vs <b>${f.n}</b> fixed-policy in this window —
+      send a few with the toggle on, then a few with it off.</p>`
   }
   const row = (label, av, fv, fmt, better) => {
     const win = better === 'low' ? av < fv : av > fv
@@ -224,11 +230,11 @@ function comparePanel(s) {
   }
   return `<table class="dash-table">
     <thead><tr><th>Metric</th><th>Adaptive</th><th>Fixed policy</th><th>Δ</th></tr></thead>
+    <caption class="dash-caption">${a.n} adaptive vs ${f.n} fixed-policy requests in this window.</caption>
     <tbody>
       ${row('p50 RTT', a.p50, f.p50, ms, 'low')}
       ${row('p95 RTT', a.p95, f.p95, ms, 'low')}
       ${row('Solar-served', a.solar, f.solar, pct, 'high')}
-      ${row('Requests', a.n, f.n, num, 'high')}
     </tbody></table>`
 }
 
@@ -244,6 +250,12 @@ export function renderDashboard() {
       <div>
         <h2>Network Analytics</h2>
         <p class="dash-range">${s.overall.n ? fmtRange(s.from, s.to) : 'No requests in this period'} · ${num(eventCount())} total records in store</p>
+        <p class="dash-prov">
+          <span class="prov-chip prov-sim">SIMULATED</span>
+          <b>${num(s.seeded)}</b> seeded from the orbital model (deterministic seed 20260614 — every viewer sees identical history)
+          · <b>${num(s.live)}</b> live request${s.live === 1 ? '' : 's'} you generated in this browser.
+          Both are produced by the same physics; live rows are the ones that carry your policy choices.
+        </p>
       </div>
       <div class="win-tabs" id="win-tabs">
         ${WINDOWS.map(w => `<button class="win-tab ${w.id === currentWindow ? 'active' : ''}" data-win="${w.id}">${w.label}</button>`).join('')}
@@ -298,7 +310,7 @@ export function renderDashboard() {
 
     <div class="dash-actions">
       <button class="dash-btn" id="dash-export">⬇ Export window as JSON</button>
-      <button class="dash-btn dash-btn-danger" id="dash-clear">Clear all telemetry</button>
+      <button class="dash-btn dash-btn-danger" id="dash-clear">Reset to seeded history</button>
     </div>
   `
 
@@ -330,7 +342,11 @@ export function renderDashboard() {
   })
 
   host.querySelector('#dash-clear')?.addEventListener('click', () => {
+    // Drops live requests and restores the seeded 30 days. Never leaves the
+    // dashboard empty — an empty analytics view is indistinguishable from a
+    // broken one to anyone evaluating this in under a minute.
     clearAll()
+    onReset()
     renderDashboard()
     onDataChange()
   })
@@ -345,8 +361,9 @@ export function openDashboard() {
   renderDashboard()
 }
 
-export function initDashboard({ onChange } = {}) {
+export function initDashboard({ onChange, onReset: reset } = {}) {
   onDataChange = onChange || (() => {})
+  onReset      = reset || (() => {})
   const overlay = document.getElementById('dash-overlay')
   const open    = openDashboard
   const close   = () => overlay.classList.add('hidden')

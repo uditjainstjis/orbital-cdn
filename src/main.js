@@ -62,7 +62,7 @@ async function main() {
   // 4. UI
   ensureHistory()
   initInsights()
-  initDashboard({ onChange: updateAdaptiveBadge })
+  initDashboard({ onChange: updateAdaptiveBadge, onReset: ensureHistory })
   updateAdaptiveBadge()
   initIntro()
   initCityGrid(city => {
@@ -243,12 +243,14 @@ function initIntro() {
 
   // Lead with the strongest finding already in the seeded history
   try {
-    const s   = summarize('30d')
-    const win = [...s.byCity].filter(c => c.n >= 4).sort((a, b) => b.winRate - a.winRate)[0]
-    const el  = document.getElementById('intro-stat')
-    if (el && win) {
-      el.textContent = `orbital beat terrestrial fibre for ${(win.winRate * 100).toFixed(0)}% of ${win.key} requests `
-                     + `across ${s.overall.n} logged requests, saving ${Math.round(win.savedMs)} ms on average.`
+    const s    = summarize('30d')
+    const rank = [...s.byCity].filter(c => c.n >= 4).sort((a, b) => b.winRate - a.winRate)
+    const el   = document.getElementById('intro-stat')
+    if (el && rank.length > 1) {
+      const top = rank[0], bot = rank[rank.length - 1]
+      el.textContent = `across ${s.overall.n} logged requests, orbital beat terrestrial fibre `
+                     + `${(s.overall.winRate * 100).toFixed(0)}% of the time overall — but ${(top.winRate * 100).toFixed(0)}% for ${top.key} `
+                     + `and only ${(bot.winRate * 100).toFixed(0)}% for ${bot.key}.`
     } else if (el) {
       el.textContent = `${s.overall.n} requests logged over the last 30 days.`
     }
