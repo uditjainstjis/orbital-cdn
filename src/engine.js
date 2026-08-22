@@ -3,6 +3,8 @@
 
 import { GATEWAYS } from './network.js'
 import { adaptiveProfile, adaptiveEnabled } from './telemetry.js'
+import { forecastGateway, currentOutage } from './predict/weather.js'
+import { PREDICT } from './predict/config.js'
 
 // Adaptation strength — how much observed history is allowed to bend the
 // hand-set policy weights. 0 = pure policy, 1 = history dominates.
@@ -206,17 +208,46 @@ export function weatherMs(weather) {
   return weather === 'clear' ? 0 : weather === 'cloudy' ? 8 : 22
 }
 
-export function gwCostMs(city, gw, w, prof) {
+/**
+ * Expected cost of predicted failure at a gateway, in milliseconds.
+ *
+ * P(outage) x FAILURE_COST_MS, summed over horizons with a taper because a
+ * 12-hour-ahead prediction deserves less weight than a 1-hour one. Damped by
+ * model confidence, so an out-of-distribution prediction cannot drive routing
+ * on its own. Returns 0 when prediction is unavailable — the deterministic
+ * engine must remain able to stand alone.
+ */
+export function predictiveCostMs(gw, fc) {
+  if (!fc) return 0
+  let sum = 0, wsum = 0
+  for (const [h, hw] of Object.entries(PREDICT.HORIZON_WEIGHTS)) {
+    const p = fc.risk?.[h]
+    if (typeof p !== 'number') continue
+    sum  += hw * p
+    wsum += hw
+  }
+  const nowTerm  = fc.outageNow ?? 0
+  // No horizons supplied means "current conditions only" — still a real cost.
+  // Bailing out here would silently discard the observed fade and make a
+  // reactive configuration indistinguishable from a blind one.
+  if (!wsum) return PREDICT.FAILURE_COST_MS * nowTerm
+  const expected = sum / wsum
+  // The present is certain; the forecast is not, so only the forecast is damped.
+  return PREDICT.FAILURE_COST_MS * (nowTerm + fc.confidence * expected * (1 - nowTerm))
+}
+
+export function gwCostMs(city, gw, w, prof, fc) {
   const learned = prof?.ready ? (prof.gwPenalty[gw.name] ?? 0) : 0
   return w.lat * reachMs(city.lat, city.lon, gw.lat, gw.lon)
        + w.wx  * weatherMs(gw.weather)
        + w.wx  * ADAPT_COST_MS * ADAPT_GAIN * learned
+       + w.wx  * predictiveCostMs(gw, fc)
 }
 
-function findBestGateway(city, policy, prof) {
+function findBestGateway(city, policy, prof, forecasts) {
   const w = POLICY_WEIGHTS[policy]
   return GATEWAYS.reduce((best, gw) => {
-    const cost    = gwCostMs(city, gw, w, prof)
+    const cost    = gwCostMs(city, gw, w, prof, forecasts?.[gw.name])
     const learned = prof?.ready ? (prof.gwPenalty[gw.name] ?? 0) : 0
     return (!best || cost < best.cost)
       ? { ...gw, cost,
@@ -282,7 +313,7 @@ export function comparePolicies({ city, service, sats, prof }) {
 
 // ─── Main simulation ───────────────────────────────────────────────────────
 
-export function runSimulation({ city, service, policy, sats, learnWindow = '7d' }) {
+export function runSimulation({ city, service, policy, sats, learnWindow = '7d', predictive = true }) {
   const dcList = sats.filter(s => s.isDC)
   const w      = POLICY_WEIGHTS[policy]
 
@@ -291,6 +322,17 @@ export function runSimulation({ city, service, policy, sats, learnWindow = '7d' 
   // adaptive mode is off or there is not enough history yet.
   const useAdaptive = adaptiveEnabled()
   const prof        = useAdaptive ? adaptiveProfile(learnWindow) : { ready: false }
+
+  // Predictive layer. Deliberately optional: if it throws or is disabled the
+  // deterministic engine below is unchanged, so ML is never a single point of
+  // failure for routing.
+  let forecasts = null
+  if (predictive) {
+    try {
+      forecasts = {}
+      for (const gw of GATEWAYS) forecasts[gw.name] = forecastGateway(gw)
+    } catch { forecasts = null }
+  }
 
   // Step 1: Uplink satellite
   const uplink = findNearestSat(city.lat, city.lon, sats)
@@ -332,7 +374,7 @@ export function runSimulation({ city, service, policy, sats, learnWindow = '7d' 
       scoreTotal:   gwCostMs(city, gw, w, prof).toFixed(1),
     }
   })
-  const gw    = findBestGateway(city, policy, prof)
+  const gw    = findBestGateway(city, policy, prof, forecasts)
   const gwSat = findNearestSat(gw.lat, gw.lon, sats)
 
   // Step 5: RTT from the actual geometry of the path that was chosen
@@ -353,6 +395,9 @@ export function runSimulation({ city, service, policy, sats, learnWindow = '7d' 
     rtt, baseline, stretch,
     sunlitDCs: dcList.filter(d => !d.eclipsed).length,
     counterfactual: comparePolicies({ city, service, sats, prof }),
+    forecasts,
+    gwForecast: forecasts?.[gw.name] ?? null,
+    predictiveMs: forecasts ? predictiveCostMs(gw, forecasts[gw.name]) : 0,
     adaptive:  useAdaptive && prof.ready,
     learnWindow,
     profile:   prof,
