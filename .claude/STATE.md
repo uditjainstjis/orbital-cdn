@@ -164,3 +164,27 @@ latency, because hysteresis on a sticky route buys nothing when re-selection is 
 **Only Singapore produces fade above the 6 dB margin in this trace** (19% of hours, max 19.9 dB);
 Mumbai/Tokyo/Lagos a handful; Frankfurt/Virginia/Sao Paulo/Sydney never. That bounds how much
 any weather-aware routing can help, and it is why the experiment runs the full trace.
+
+## Visual differentiation pass (2026-08-22)
+**Problem Udit raised:** other teams at the same hackathon ship the identical
+globe.gl-on-black-with-cyan-glow look. At a 3-second glance we were indistinguishable.
+
+**Response — two moves, not a restyle:**
+1. **Centre view is now the crossover chart** (`src/crossover.js`), not the globe. Geodesic
+   rings at the published **4,472 km** break-even distance around each cloud region, with the
+   8 cities plotted at their *measured* win rate. The cities land on the correct side of the
+   line without being placed there. This is the one picture no other team can draw.
+   Coastlines: Natural Earth 110m, RDP-simplified to **813 points / 10 KB**, cropped 80N–58S.
+   Globe is one click away (`EVIDENCE | LIVE 3D`) and auto-engages for the routing cinematic.
+2. **Instrument palette** — warm graphite ground, signal amber as the single accent, green/red
+   reserved strictly for measured outcomes. Corner ticks, hairlines, tabular numerals, no bloom.
+   79 uses of `--cyan` meant this was a token change, not a rewrite.
+
+Also: **all 143 emoji removed**, replaced by a 48-icon stroke set (`src/icons.js`) hydrated
+from `<i data-ic>` placeholders via MutationObserver. Flag emoji dropped entirely (they do not
+render on Windows Chrome) in favour of two-letter country chips.
+
+**Gotcha worth remembering:** `getComputedStyle` is unreliable in a backgrounded Chrome tab —
+style recalc is throttled, so it reported opacity 1 on elements whose inline `!important` said
+0. Verify visual state with a screenshot, not a computed-style read. This is the third time
+background-tab throttling has produced a false negative in this project.
