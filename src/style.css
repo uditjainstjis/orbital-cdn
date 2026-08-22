@@ -1583,3 +1583,152 @@ html, body {
 @media (max-width: 1180px) {
   #autopilot-panel { display: none; }
 }
+
+/* ─── Icons ───────────────────────────────────────────────────────────────── */
+.ic {
+  display: inline-block; vertical-align: -0.14em; flex: 0 0 auto;
+  stroke: currentColor; fill: none;
+}
+.cc {
+  display: inline-block; min-width: 22px; padding: 1px 4px; margin-right: 7px;
+  border-radius: 3px; background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.06em;
+  color: var(--muted); text-align: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SHELL — nav rail, numbered sections, status bar
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#nav-rail {
+  position: absolute; left: 0; top: 56px; bottom: 34px; width: 62px; z-index: 950;
+  display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 12px 0;
+  background: linear-gradient(180deg, rgba(6,12,22,0.92), rgba(4,8,16,0.92));
+  border-right: 1px solid var(--border);
+}
+.rail-logo {
+  width: 38px; height: 38px; display: grid; place-items: center; margin-bottom: 12px;
+  border-radius: 11px; color: var(--cyan);
+  background: linear-gradient(140deg, rgba(0,212,255,0.16), rgba(124,58,237,0.16));
+  border: 1px solid rgba(0,212,255,0.32);
+}
+.rail-btn {
+  width: 50px; padding: 9px 0 7px; border: none; background: transparent; cursor: pointer;
+  color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 4px;
+  border-radius: 9px; transition: color .15s, background .15s; position: relative;
+}
+.rail-btn span {
+  font-size: 8px; letter-spacing: 0.08em; text-transform: uppercase;
+  font-family: 'JetBrains Mono', monospace;
+}
+.rail-btn:hover { color: #9fb2c8; background: rgba(255,255,255,0.03); }
+.rail-btn.active { color: var(--cyan); background: rgba(0,212,255,0.08); }
+.rail-btn.active::before {
+  content: ''; position: absolute; left: -6px; top: 50%; transform: translateY(-50%);
+  width: 2px; height: 22px; border-radius: 2px; background: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan);
+}
+
+/* Shift the main content clear of the rail */
+#panel-left  { left: 78px !important; }
+#autopilot-panel { left: 390px !important; }
+
+.sec-n {
+  display: inline-block; margin-right: 8px; padding: 1px 5px; border-radius: 4px;
+  background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.22);
+  color: var(--cyan); font-family: 'JetBrains Mono', monospace; font-size: 9px;
+  letter-spacing: 0.04em;
+}
+
+#status-bar {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 34px; z-index: 940;
+  display: flex; align-items: center; gap: 18px; padding: 0 16px;
+  background: linear-gradient(180deg, rgba(6,12,22,0.9), rgba(3,6,12,0.96));
+  border-top: 1px solid var(--border);
+  font-size: 10.5px; color: var(--muted);
+}
+.sb-left { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; color: #8fa5bd; }
+.sb-label { font-family: 'JetBrains Mono', monospace; letter-spacing: 0.1em; font-size: 9.5px; }
+.sb-pill {
+  padding: 2px 8px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 0.07em;
+  background: rgba(16,185,129,0.14); border: 1px solid rgba(16,185,129,0.4); color: #6ee7b7;
+}
+.sb-pill.off  { background: rgba(74,95,122,0.16); border-color: var(--border); color: var(--muted); }
+.sb-pill.auto { background: rgba(124,58,237,0.18); border-color: rgba(124,58,237,0.5); color: #c4b5fd; }
+.sb-feed {
+  flex: 1; display: flex; gap: 22px; overflow: hidden; white-space: nowrap;
+  mask-image: linear-gradient(90deg, transparent, #000 3%, #000 92%, transparent);
+}
+.sb-item { display: inline-flex; align-items: center; gap: 7px; color: #8fa5bd; }
+.sb-item .ic { color: var(--cyan); opacity: .8; }
+.sb-item b { color: var(--text); font-weight: 500; }
+.sb-ago { color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 9px; }
+.sb-right { flex: 0 0 auto; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.05em; }
+
+/* Lift floating panels above the new status bar */
+#playback-controls { bottom: 48px !important; }
+#layer-controls    { bottom: 48px !important; }
+#autopilot-panel   { bottom: 48px !important; }
+#reasoning-ticker  { bottom: 96px !important; }
+
+@media (max-width: 1180px) {
+  #nav-rail { display: none; }
+  #panel-left { left: 20px !important; }
+}
+
+/* ─── Denser top bar ──────────────────────────────────────────────────────── */
+#topbar { padding: 0 14px !important; height: 52px; gap: 12px; }
+#topbar .logo {
+  display: flex; align-items: center; gap: 9px; white-space: nowrap;
+  color: var(--cyan); font-size: 13px; letter-spacing: 0.04em;
+}
+#topbar .logo b { font-weight: 700; color: #eaf7ff; letter-spacing: 0.06em; }
+#topbar .logo span {
+  color: var(--muted); font-weight: 400; font-size: 9.5px; letter-spacing: 0.08em;
+  text-transform: uppercase; padding-left: 9px; border-left: 1px solid var(--border);
+}
+.top-badges { display: flex; align-items: center; gap: 7px; flex-wrap: nowrap; overflow: hidden; }
+.top-badges .badge {
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+  padding: 6px 10px; font-size: 10px; line-height: 1;
+}
+.top-badges .badge .ic { opacity: .85; }
+@media (max-width: 1400px) {
+  .badge-time, .badge-dc { display: none; }
+}
+
+/* City buttons carry a country chip rather than a flag emoji */
+.city-btn { display: flex !important; align-items: center; gap: 0; }
+.city-btn .cc { margin-right: 8px; }
+
+/* Service and policy rows: align the new icons */
+.service-btn .svc-icon, .service-btn > .ic { color: var(--cyan); opacity: .9; }
+.policy-tab { display: inline-flex; align-items: center; gap: 6px; }
+.policy-tab .ic { opacity: .85; }
+.send-btn { display: flex; align-items: center; justify-content: center; gap: 9px; }
+.pb-btn { display: inline-grid; place-items: center; }
+.deepdive-btn, .insights-btn, .dash-open-btn, .ap-open-btn, .idle-cta, .dash-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+}
+.decision-card .dc-icon, .empty-icon { color: var(--cyan); }
+.empty-icon .ic { width: 34px; height: 34px; opacity: .55; }
+
+.spin {
+  width: 13px; height: 13px; border-radius: 50%; display: inline-block;
+  border: 2px solid rgba(255,255,255,0.25); border-top-color: #fff;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Clear the new status bar and keep the floating panels from colliding */
+#panel-left { bottom: 48px !important; padding-bottom: 6px; }
+#playback-controls { left: calc(50% + 110px) !important; }
+#autopilot-panel { width: 274px !important; }
+
+/* The nav rail owns the far left, so the globe should not sit under it */
+#globe-container { left: 62px; width: calc(100% - 62px); }
+@media (max-width: 1180px) {
+  #globe-container { left: 0; width: 100%; }
+  #playback-controls { left: 50% !important; }
+}

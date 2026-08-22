@@ -110,7 +110,7 @@ export function initNetwork(world) {
     .polygonSideColor(() => 'rgba(239,68,68,0.05)')
     .polygonStrokeColor(() => 'rgba(239,68,68,0.5)')
     .polygonAltitude(0.018)
-    .polygonLabel(() => '⚠️ South Atlantic Anomaly — inner Van Allen belt dips to ~200 km.<br/>Published extent 50°S–0°, 90°W–40°E (NASA GSFC). Fermi spends ~15% of its time inside it.')
+    .polygonLabel(() => '<i data-ic="warning"></i> South Atlantic Anomaly — inner Van Allen belt dips to ~200 km.<br/>Published extent 50°S–0°, 90°W–40°E (NASA GSFC). Fermi spends ~15% of its time inside it.')
 
   // Gateways as HTML markers
   world

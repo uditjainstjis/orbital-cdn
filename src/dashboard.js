@@ -216,7 +216,7 @@ function kpis(s) {
 }
 
 function insightList(items) {
-  const icon = k => k === 'win' ? '✅' : k === 'warn' ? '⚠️' : 'ℹ️'
+  const icon = k => k === 'win' ? '<i data-ic="check"></i>' : k === 'warn' ? '<i data-ic="warning"></i>' : '<i data-ic="insights"></i>'
   return `<div class="insight-list">` + items.map(i => `
     <div class="insight-row insight-${i.kind}"><span>${icon(i.kind)}</span><p>${i.text}</p></div>`
   ).join('') + `</div>`
@@ -292,7 +292,7 @@ function comparePanel(s) {
   const row = (label, av, fv, fmt, better) => {
     const win = better === 'low' ? av < fv : av > fv
     return `<tr><td>${label}</td><td class="${win ? 'good' : ''}">${fmt(av)}</td><td>${fmt(fv)}</td>
-      <td class="${win ? 'good' : 'bad'}">${win ? '▼' : '▲'} ${fmt(Math.abs(av - fv))}</td></tr>`
+      <td class="${win ? 'good' : 'bad'}">${win ? '' : ''} ${fmt(Math.abs(av - fv))}</td></tr>`
   }
   return `<table class="dash-table">
     <thead><tr><th>Metric</th><th>Adaptive</th><th>Fixed policy</th><th>Δ</th></tr></thead>
@@ -381,7 +381,7 @@ export function renderDashboard() {
     </div>
 
     <div class="dash-actions">
-      <button class="dash-btn" id="dash-export">⬇ Export window as JSON</button>
+      <button class="dash-btn" id="dash-export"><i data-ic="download"></i> Export window as JSON</button>
       <button class="dash-btn dash-btn-danger" id="dash-clear">Reset to seeded history</button>
     </div>
   `
@@ -476,7 +476,7 @@ export function renderIdleSummary() {
         <div class="idle-note"><b>${pol[0].key}</b> ${ms(pol[0].p50)} p50 · ${pol[0].n} reqs${
           pol.length > 1 ? ` &nbsp;vs&nbsp; <b>${pol[pol.length - 1].key}</b> ${ms(pol[pol.length - 1].p50)}` : ''}</div>` : ''}
 
-      <button class="idle-cta" id="idle-open">📊 Open full analytics</button>
+      <button class="idle-cta" id="idle-open"><i data-ic="chart"></i> Open full analytics</button>
       <div class="idle-foot"><b>Send Request</b> routes using this history.</div>
     </div>`
 

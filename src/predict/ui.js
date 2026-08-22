@@ -16,6 +16,9 @@ import { MODES, AGENT } from './config.js'
 import METRICS from './fade_model_metrics.json'
 import { runExperiment } from './experiment.js'
 
+let emit = () => {}
+export function setEventSink(fn) { emit = fn || (() => {}) }
+
 let ctx = { city: null, policy: 'balanced', prof: null }
 let tickTimer = null
 let lastExperiment = null   // survives the agent's periodic overlay re-render
@@ -65,7 +68,7 @@ export function renderAutopilot() {
 
     ${worst && (worst.f.risk[3] ?? 0) > 0.25 ? `
       <div class="ap-alert">
-        ⚠ <b>${worst.gw.name}</b> — ${pct(worst.f.risk[3])} risk at +3h
+        <i data-ic="warning"></i> <b>${worst.gw.name}</b> — ${pct(worst.f.risk[3])} risk at +3h
       </div>` : ''}
 
     ${pend ? `
@@ -85,7 +88,7 @@ export function renderAutopilot() {
         ${last.event === 'REROUTE' || last.event === 'PROPOSED'
           ? `${last.from} → ${last.to}` : (last.reason || '')}
         ${last.verified ? `<span class="ap-verdict ${last.verified.beneficial ? 'good' : 'bad'}">
-            ${last.verified.beneficial ? '✓ degradation confirmed' : '✗ no degradation'}</span>` : ''}
+            ${last.verified.beneficial ? '✓ degradation confirmed' : '<i data-ic="cross"></i> no degradation'}</span>` : ''}
       </div>` : ''}
 
     <div class="ap-foot">
@@ -249,9 +252,9 @@ export function renderOverlay() {
       <div class="dash-card-head"><h3>Scenario injection</h3>
         <span class="dash-card-sub">adds a real rain cell on top of the recorded trace</span></div>
       <div class="ap-scenarios">
-        <button class="dash-btn" data-inject="Singapore">🌧 Heavy rain — Singapore</button>
-        <button class="dash-btn" data-inject="Frankfurt">🌧 Heavy rain — Frankfurt</button>
-        <button class="dash-btn" data-inject="Virginia">🌧 Heavy rain — Virginia</button>
+        <button class="dash-btn" data-inject="Singapore"><i data-ic="rain"></i> Heavy rain — Singapore</button>
+        <button class="dash-btn" data-inject="Frankfurt"><i data-ic="rain"></i> Heavy rain — Frankfurt</button>
+        <button class="dash-btn" data-inject="Virginia"><i data-ic="rain"></i> Heavy rain — Virginia</button>
         <button class="dash-btn dash-btn-danger" id="ap-clear-inj">Clear injections</button>
       </div>
       ${inj.length ? `<p class="dash-note" style="margin-top:10px">Active: ${inj.map(i =>
@@ -268,7 +271,7 @@ export function renderOverlay() {
       <div class="dash-card-head"><h3>Does prediction actually help?</h3>
         <span class="dash-card-sub">paired A/B/C on one identical trace</span></div>
       <div id="ap-exp">${lastExperiment ? experimentHtml(lastExperiment) : `
-        <button class="dash-btn" id="ap-run-exp">▶ Run experiment (2800 h · 5600 requests · 4 arms)</button>
+        <button class="dash-btn" id="ap-run-exp"><i data-ic="play"></i> Run experiment (2800 h · 5600 requests · 4 arms)</button>
         <p class="dash-note" style="margin-top:10px">All four arms see the same requests against the same
         recorded weather. A request fails when fade at its gateway exceeds the ${LINK.marginDb} dB link margin —
         the same physical rule everywhere, so the difference is the routing, not the luck.</p>`}</div>
@@ -351,7 +354,11 @@ export function initAutopilot({ getContext } = {}) {
   tickTimer = setInterval(() => {
     try {
       const c = getContext ? getContext() : ctx
-      if (c?.city) step({ city: c.city, policy: c.policy, prof: c.prof })
+      if (c?.city) {
+        const d = step({ city: c.city, policy: c.policy, prof: c.prof })
+        if (d?.event === 'REROUTE') emit('warning', `Autopilot rerouted <b>${d.from}</b> to <b>${d.to}</b>`)
+        else if (d?.event === 'PROPOSED') emit('brain', `Proposal: move <b>${d.from}</b> to <b>${d.to}</b>`)
+      }
       verifyPending()
       renderAutopilot()
       const ov = document.getElementById('ap-overlay')

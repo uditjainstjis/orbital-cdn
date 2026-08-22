@@ -3,7 +3,7 @@
 const SECTIONS = [
   {
     id: 'overview',
-    icon: '◎',
+    icon: '<i data-ic="logo"></i>',
     label: 'System Overview',
     render: () => `
       <div class="ins-section-eyebrow">Architecture</div>
@@ -17,49 +17,49 @@ const SECTIONS = [
         <div class="arch-tier">
           <div class="arch-tier-label">Tier 3</div>
           <div class="arch-tier-body tier-ground">
-            <div class="arch-node"><span class="arch-node-icon">🌐</span>Origin City</div>
-            <div class="arch-node"><span class="arch-node-icon">◇</span>Ground Gateway</div>
-            <div class="arch-node"><span class="arch-node-icon">◇</span>Destination</div>
+            <div class="arch-node"><span class="arch-node-icon"><i data-ic="globe"></i></span>Origin City</div>
+            <div class="arch-node"><span class="arch-node-icon"></span>Ground Gateway</div>
+            <div class="arch-node"><span class="arch-node-icon"></span>Destination</div>
           </div>
         </div>
         <div class="arch-tier-connector">↕ Radio Link (Ka/Ku-band)</div>
         <div class="arch-tier">
           <div class="arch-tier-label">Tier 2</div>
           <div class="arch-tier-body tier-orbit">
-            <div class="arch-node highlight"><span class="arch-node-icon">🛰️</span>LEO Satellite Mesh</div>
+            <div class="arch-node highlight"><span class="arch-node-icon"><i data-ic="satellite"></i></span>LEO Satellite Mesh</div>
             <div class="arch-node"><span class="arch-node-icon">—</span>ISL: Inter-Satellite Links</div>
-            <div class="arch-node"><span class="arch-node-icon">📡</span>Walker-Delta 180-sat</div>
+            <div class="arch-node"><span class="arch-node-icon"><i data-ic="antenna"></i></span>Walker-Delta 180-sat</div>
           </div>
         </div>
         <div class="arch-tier-connector">↕ Optical/RF Feeder</div>
         <div class="arch-tier">
           <div class="arch-tier-label">Tier 1</div>
           <div class="arch-tier-body tier-space">
-            <div class="arch-node highlight"><span class="arch-node-icon">🖥️</span>Orbital DC (SSO ~600 km)</div>
-            <div class="arch-node"><span class="arch-node-icon">☀️</span>Solar-Powered</div>
-            <div class="arch-node"><span class="arch-node-icon">🔒</span>Radiation-Hardened</div>
+            <div class="arch-node highlight"><span class="arch-node-icon"><i data-ic="server"></i></span>Orbital DC (SSO ~600 km)</div>
+            <div class="arch-node"><span class="arch-node-icon"><i data-ic="sun"></i></span>Solar-Powered</div>
+            <div class="arch-node"><span class="arch-node-icon"><i data-ic="lock"></i></span>Radiation-Hardened</div>
           </div>
         </div>
       </div>
 
       <div class="ins-cards">
         <div class="ins-card">
-          <div class="ins-card-icon">🛰️</div>
+          <div class="ins-card-icon"><i data-ic="satellite"></i></div>
           <div class="ins-card-title">180 LEO Satellites</div>
           <div class="ins-card-body">Walker-Delta at 550 km, 53° inclination. 9 orbital planes × 20 satellites. Inter-Satellite Links form a mesh backbone above the atmosphere.</div>
         </div>
         <div class="ins-card">
-          <div class="ins-card-icon">🖥️</div>
+          <div class="ins-card-icon"><i data-ic="server"></i></div>
           <div class="ins-card-title">3 Orbital DCs</div>
           <div class="ins-card-body">Sun-Synchronous Orbit at ~600 km in dawn-dusk configuration. Permanently lit, solar-powered, low thermal cycling vs circular LEO.</div>
         </div>
         <div class="ins-card">
-          <div class="ins-card-icon">◇</div>
+          <div class="ins-card-icon"></div>
           <div class="ins-card-title">8 Ground Gateways</div>
           <div class="ins-card-body">Singapore, Mumbai, Frankfurt, Virginia, Tokyo, São Paulo, Sydney, Lagos. Weather and cloud cover tracked per gateway in real-time.</div>
         </div>
         <div class="ins-card">
-          <div class="ins-card-icon">⚡</div>
+          <div class="ins-card-icon"><i data-ic="bolt"></i></div>
           <div class="ins-card-title">30–40% Faster</div>
           <div class="ins-card-body">Light travels 33% faster in vacuum than through silica fiber (c vs ~0.67c). For London → Tokyo, that saves ~45 ms RTT vs undersea cable.</div>
         </div>
@@ -69,7 +69,7 @@ const SECTIONS = [
 
   {
     id: 'physics',
-    icon: '⚡',
+    icon: '<i data-ic="bolt"></i>',
     label: 'Physics of Speed',
     render: () => `
       <div class="ins-section-eyebrow">Fundamental Advantage</div>
@@ -139,22 +139,22 @@ const SECTIONS = [
 
       <div class="ins-cards">
         <div class="ins-card">
-          <div class="ins-card-icon">🌊</div>
+          <div class="ins-card-icon"><i data-ic="wave"></i></div>
           <div class="ins-card-title">South Atlantic Anomaly</div>
           <div class="ins-card-body">SAA bounding box lat [−50,0]° lon [−80,10]°. Nodes inside receive +2.0 radiation penalty (R_n). The router avoids this zone unless no alternative path exists.</div>
         </div>
         <div class="ins-card">
-          <div class="ins-card-icon">🌑</div>
+          <div class="ins-card-icon"><i data-ic="eclipse"></i></div>
           <div class="ins-card-title">Eclipse Penalty</div>
           <div class="ins-card-body">Cylindrical umbra model: DC eclipsed if angular separation from sub-solar point > 128°. S_DC = 0 forces the router toward sunlit DCs for uninterrupted solar power.</div>
         </div>
         <div class="ins-card">
-          <div class="ins-card-icon">🌧️</div>
+          <div class="ins-card-icon"><i data-ic="rain"></i></div>
           <div class="ins-card-title">Ka-Band Rain Fade</div>
           <div class="ins-card-body">Ka-band signals (26.5–40 GHz) attenuate 5–15 dB/km in heavy rain. W_G = 1.0 in rain makes "Reliable" policy avoid wet gateways and prefer clear-sky downlinks.</div>
         </div>
         <div class="ins-card">
-          <div class="ins-card-icon">☀️</div>
+          <div class="ins-card-icon"><i data-ic="sun"></i></div>
           <div class="ins-card-title">Solar Compute Bonus</div>
           <div class="ins-card-body">Sunlit DCs run on photovoltaic panels. S_DC = 1 gives a cost reduction under "Green" policy (w_sol = 0.9), prioritizing renewable orbital compute over battery-backed eclipse ops.</div>
         </div>
@@ -164,7 +164,7 @@ const SECTIONS = [
 
   {
     id: 'policies',
-    icon: '⚖️',
+    icon: '<i data-ic="balance"></i>',
     label: 'Routing Policies',
     render: () => `
       <div class="ins-section-eyebrow">Policy Engine</div>
@@ -190,25 +190,25 @@ const SECTIONS = [
         </thead>
         <tbody>
           <tr>
-            <td><span class="ins-tag tag-cyan">⚡ Latency</span></td>
+            <td><span class="ins-tag tag-cyan"><i data-ic="bolt"></i> Latency</span></td>
             <td>Min RTT</td>
             <td style="color:var(--cyan)">0.95</td><td>0.05</td><td>0.05</td><td>0.05</td><td>0.05</td>
             <td>Real-time gaming, HFT, streaming</td>
           </tr>
           <tr>
-            <td><span class="ins-tag tag-amber">⚖️ Balanced</span></td>
+            <td><span class="ins-tag tag-amber"><i data-ic="balance"></i> Balanced</span></td>
             <td>All-round</td>
             <td>0.50</td><td>0.50</td><td>0.50</td><td>0.40</td><td>0.40</td>
             <td>LLM inference, general APIs</td>
           </tr>
           <tr>
-            <td><span class="ins-tag tag-green">🌱 Green</span></td>
+            <td><span class="ins-tag tag-green"><i data-ic="leaf"></i> Green</span></td>
             <td>Solar compute</td>
             <td>0.20</td><td style="color:var(--green)">0.90</td><td>0.20</td><td>0.30</td><td style="color:var(--green)">0.85</td>
             <td>Batch ML training, archival</td>
           </tr>
           <tr>
-            <td><span class="ins-tag tag-red">🛡️ Reliable</span></td>
+            <td><span class="ins-tag tag-red"><i data-ic="shield"></i> Reliable</span></td>
             <td>Min failure risk</td>
             <td>0.20</td><td>0.30</td><td style="color:var(--red)">0.95</td><td style="color:var(--red)">0.90</td><td>0.20</td>
             <td>Financial settlement, mission-critical</td>
@@ -224,12 +224,12 @@ const SECTIONS = [
 
       <div class="ins-cards" style="margin-top:4px">
         <div class="ins-card">
-          <div class="ins-card-icon">⚡</div>
+          <div class="ins-card-icon"><i data-ic="bolt"></i></div>
           <div class="ins-card-title">Latency mode</div>
           <div class="ins-card-body">w_lat = 0.95 dominates. The router will cross the SAA, use eclipsed DCs, and prefer wet gateways if it saves even 5 ms. Used in HFT and gaming CDNs.</div>
         </div>
         <div class="ins-card">
-          <div class="ins-card-icon">🌱</div>
+          <div class="ins-card-icon"><i data-ic="leaf"></i></div>
           <div class="ins-card-title">Green mode</div>
           <div class="ins-card-body">w_sol = 0.90 + w_eng = 0.85. Strongly prefers sunlit DCs and laser ISLs (lower energy than RF). Can accept 15–20 ms extra latency to stay 100% solar.</div>
         </div>
@@ -239,7 +239,7 @@ const SECTIONS = [
 
   {
     id: 'space-env',
-    icon: '🌌',
+    icon: '<i data-ic="target"></i>',
     label: 'Space Environment',
     render: () => `
       <div class="ins-section-eyebrow">Hazards & Mitigation</div>
@@ -252,7 +252,7 @@ const SECTIONS = [
       <div class="saa-map">
         <div class="saa-glow"></div>
         <div class="saa-label">
-          ⚠️ South Atlantic Anomaly<br/>
+          <i data-ic="warning"></i> South Atlantic Anomaly<br/>
           <span style="font-size:10px;opacity:.7">lat [−50°, 0°] · lon [−80°, +10°] · Inner Van Allen belt dips to ~200 km</span>
         </div>
       </div>
@@ -260,7 +260,7 @@ const SECTIONS = [
       <div class="ins-steps">
         <div class="ins-step">
           <div class="ins-step-line">
-            <div class="ins-step-dot" style="background:rgba(239,68,68,.2);border:1px solid var(--red);color:var(--red)">☢</div>
+            <div class="ins-step-dot" style="background:rgba(239,68,68,.2);border:1px solid var(--red);color:var(--red)"><i data-ic="radiation"></i></div>
             <div class="ins-step-connector"></div>
           </div>
           <div class="ins-step-body">
@@ -276,7 +276,7 @@ const SECTIONS = [
         </div>
         <div class="ins-step">
           <div class="ins-step-line">
-            <div class="ins-step-dot" style="background:rgba(16,185,129,.2);border:1px solid var(--green);color:var(--green)">🌑</div>
+            <div class="ins-step-dot" style="background:rgba(16,185,129,.2);border:1px solid var(--green);color:var(--green)"><i data-ic="eclipse"></i></div>
             <div class="ins-step-connector"></div>
           </div>
           <div class="ins-step-body">
@@ -292,7 +292,7 @@ const SECTIONS = [
         </div>
         <div class="ins-step">
           <div class="ins-step-line">
-            <div class="ins-step-dot" style="background:rgba(245,158,11,.2);border:1px solid var(--amber);color:var(--amber)">☀️</div>
+            <div class="ins-step-dot" style="background:rgba(245,158,11,.2);border:1px solid var(--amber);color:var(--amber)"><i data-ic="sun"></i></div>
             <div class="ins-step-connector"></div>
           </div>
           <div class="ins-step-body">
@@ -307,7 +307,7 @@ const SECTIONS = [
         </div>
         <div class="ins-step">
           <div class="ins-step-line">
-            <div class="ins-step-dot" style="background:rgba(0,212,255,.2);border:1px solid var(--cyan);color:var(--cyan)">📡</div>
+            <div class="ins-step-dot" style="background:rgba(0,212,255,.2);border:1px solid var(--cyan);color:var(--cyan)"><i data-ic="antenna"></i></div>
           </div>
           <div class="ins-step-body">
             <div class="ins-step-title">Atomic Oxygen Erosion</div>
@@ -325,7 +325,7 @@ const SECTIONS = [
 
   {
     id: 'diversity',
-    icon: '🌍',
+    icon: '<i data-ic="globe"></i>',
     label: 'Site Diversity',
     render: () => `
       <div class="ins-section-eyebrow">Ground Infrastructure</div>
@@ -415,12 +415,12 @@ const SECTIONS = [
 
       <div class="ins-cards">
         <div class="ins-card">
-          <div class="ins-card-icon">📶</div>
+          <div class="ins-card-icon"><i data-ic="signal"></i></div>
           <div class="ins-card-title">Ka-Band Rain Fade</div>
           <div class="ins-card-body">ITU-R P.618 model: 25 mm/hr rain gives ~7 dB/km attenuation at 30 GHz. A 5 km path in heavy rain loses 35 dB — exceeding most satellite downlink margins by 10–20 dB.</div>
         </div>
         <div class="ins-card">
-          <div class="ins-card-icon">🛡️</div>
+          <div class="ins-card-icon"><i data-ic="shield"></i></div>
           <div class="ins-card-title">ACM Adaptive Coding</div>
           <div class="ins-card-body">Adaptive Coding & Modulation (DVB-S2X): during light rain the gateway drops from 32APSK to QPSK, halving throughput but maintaining link. In severe rain, traffic fails over to an alternate gateway.</div>
         </div>
@@ -430,7 +430,7 @@ const SECTIONS = [
 
   {
     id: 'references',
-    icon: '📚',
+    icon: '<i data-ic="book"></i>',
     label: 'References',
     render: () => `
       <div class="ins-section-eyebrow">Research & Standards</div>

@@ -1,6 +1,7 @@
 // Orbital CDN 3D Live Simulator — entry point
 
 import * as THREE from 'three'
+import { initIcons } from './icons.js'
 import { initInsights } from './insights.js'
 import { initGlobe, getWorld, updateEarth, toggleClouds, toggleNightLights } from './globe.js'
 import { initSatellites, updateSatellites, sats, satBodyMeshes, sunlitDCCount, toggleISL } from './sats.js'
@@ -18,7 +19,7 @@ import {
 import { initDashboard, renderDashboard, getLearnWindow, openDashboard, renderIdleSummary } from './dashboard.js'
 import { record, eventCount, seedEvents, adaptiveEnabled, summarize } from './telemetry.js'
 import { generateHistory } from './seed.js'
-import { initAutopilot, renderAutopilot } from './predict/ui.js'
+import { initAutopilot, renderAutopilot, setEventSink } from './predict/ui.js'
 import * as agentApi from './predict/agent.js'
 import * as weatherApi from './predict/weather.js'
 import { adaptiveProfile } from './telemetry.js'
@@ -42,6 +43,8 @@ const _mouse      = new THREE.Vector2()
 let   _hoverReady = false   // enable hover only after first routing completes
 
 async function main() {
+  initIcons()          // swap <i data-ic> placeholders for SVG, incl. future renders
+
   const container = document.getElementById('globe-container')
 
   // 1. Photorealistic Earth
@@ -71,6 +74,8 @@ async function main() {
   updateAdaptiveBadge()
   initIntro()
   renderIdleSummary()
+  initShell()
+  setEventSink(pushEvent)
 
   // Debug/demo handle. Exposes the app's OWN module instances so a scenario can
   // be driven reproducibly from the console — importing the modules separately
@@ -148,6 +153,7 @@ async function main() {
     // Persist the outcome — this request is now part of what the network learns from
     record(data, { adaptive: data.adaptive })
     setCurrentGateway(data.gw.name)
+    pushEvent('gateway', `Routed <b>${data.city.city}</b> via <b>${data.gw.name}</b> · ${data.rtt} ms`)
     renderAutopilot()
     updateAdaptiveBadge()
     lastData = data
@@ -305,6 +311,57 @@ function initIntro() {
   })
 }
 
+// ─── Shell: nav rail and status bar ────────────────────────────────────────
+
+const feed = []   // rolling event strip along the bottom
+
+export function pushEvent(iconName, html) {
+  feed.unshift({ ic: iconName, html, at: Date.now() })
+  if (feed.length > 6) feed.pop()
+  renderFeed()
+}
+
+function ago(ms) {
+  const s = Math.max(0, (Date.now() - ms) / 1000)
+  return s < 60 ? `${s | 0}s ago` : s < 3600 ? `${(s / 60) | 0}m ago` : `${(s / 3600) | 0}h ago`
+}
+
+function renderFeed() {
+  const el = document.getElementById('sb-feed')
+  if (!el) return
+  el.innerHTML = feed.map(f =>
+    `<span class="sb-item"><i data-ic="${f.ic}" data-size="13"></i>${f.html}<span class="sb-ago">${ago(f.at)}</span></span>`
+  ).join('')
+  const m = document.getElementById('sb-mode')
+  if (m) {
+    const mode = agentApi.getMode()
+    m.textContent = mode
+    m.className = 'sb-pill' + (mode === 'OFF' ? ' off' : mode === 'AUTOPILOT' ? ' auto' : '')
+  }
+}
+
+function initShell() {
+  document.querySelectorAll('.rail-btn').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('.rail-btn').forEach(x => x.classList.remove('active'))
+    b.classList.add('active')
+    const t = b.dataset.rail
+    if (t === 'analytics') openDashboard()
+    else if (t === 'autopilot') document.getElementById('autopilot-btn')?.click()
+    else if (t === 'insights') document.getElementById('insights-btn')?.click()
+    else if (t === 'layers') document.getElementById('layer-controls')?.scrollIntoView({ block: 'nearest' })
+  }))
+
+  setInterval(() => {
+    const d = new Date(), p = n => String(n).padStart(2, '0')
+    const c = document.getElementById('sb-clock')
+    if (c) c.textContent = `${p(d.getUTCHours())}:${p(d.getUTCMinutes())}:${p(d.getUTCSeconds())}`
+    renderFeed()
+  }, 1000)
+
+  pushEvent('satellite', 'Constellation propagating from live TLEs')
+  pushEvent('chart', 'Analytics ready — <b>991</b> logged requests')
+}
+
 function updateAdaptiveBadge() {
   const el = document.getElementById('adaptive-badge')
   if (!el) return
@@ -314,7 +371,7 @@ function updateAdaptiveBadge() {
     const s = summarize('7d')
     if (s.overall.n) head = `${(s.overall.winRate * 100).toFixed(0)}% BEAT FIBRE · ${s.overall.p50}ms p50`
   } catch { /* fall back to the count */ }
-  el.textContent = on ? `◈ ADAPTIVE · ${head}` : `◈ FIXED POLICY · ${head}`
+  el.innerHTML = `<i data-ic="${on ? 'target' : 'lock'}" data-size="12"></i> ${on ? 'ADAPTIVE' : 'FIXED'} · ${head}`
   el.classList.toggle('badge-adaptive-on', on)
   const overlay = document.getElementById('dash-overlay')
   if (overlay && !overlay.classList.contains('hidden')) renderDashboard()

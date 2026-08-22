@@ -16,64 +16,74 @@
 
     <!-- Top bar -->
     <div id="topbar">
-      <div class="logo">◎ ORBITAL CDN <span>/ 3D Live Simulator</span></div>
+      <div class="logo"><i data-ic="logo" data-size="18"></i><b>ORBITAL CDN</b><span>3D Live Simulator</span></div>
       <div class="top-badges">
-        <span class="badge badge-live"><span class="pulse">●</span> LIVE 3D</span>
+        <span class="badge badge-live"><span class="pulse"></span> LIVE 3D</span>
         <span class="badge badge-sats" id="sat-badge">180 SATS</span>
         <span class="badge badge-dc" id="dc-badge">4 DCs SUNLIT</span>
         <span class="badge badge-time" id="utc-clock">UTC 00:00:00</span>
-        <span class="badge badge-adaptive" id="adaptive-badge">◈ ADAPTIVE</span>
-        <button class="badge dash-open-btn" id="dash-btn">📊 Network Analytics</button>
-        <button class="badge ap-open-btn" id="autopilot-btn">🛰 Autopilot</button>
-        <button class="badge insights-btn" id="insights-btn">📐 Architecture &amp; Insights</button>
+        <span class="badge badge-adaptive" id="adaptive-badge"><i data-ic="target"></i> ADAPTIVE</span>
+        <button class="badge dash-open-btn" id="dash-btn"><i data-ic="chart"></i> Network Analytics</button>
+        <button class="badge ap-open-btn" id="autopilot-btn"><i data-ic="satellite"></i> Autopilot</button>
+        <button class="badge insights-btn" id="insights-btn"><i data-ic="blueprint"></i> Architecture &amp; Insights</button>
       </div>
     </div>
+
+    <!-- Left navigation rail -->
+    <nav id="nav-rail">
+      <div class="rail-logo"><i data-ic="logo" data-size="22"></i></div>
+      <button class="rail-btn active" data-rail="routes"><i data-ic="routes" data-size="19"></i><span>Routes</span></button>
+      <button class="rail-btn" data-rail="layers"><i data-ic="layers" data-size="19"></i><span>Layers</span></button>
+      <button class="rail-btn" data-rail="analytics"><i data-ic="analytics" data-size="19"></i><span>Analytics</span></button>
+      <button class="rail-btn" data-rail="autopilot"><i data-ic="infrastructure" data-size="19"></i><span>Autopilot</span></button>
+      <button class="rail-btn" data-rail="insights"><i data-ic="insights" data-size="19"></i><span>Insights</span></button>
+    </nav>
 
     <!-- Left control panel -->
     <div id="panel-left" class="glass-panel">
       <div class="panel-section">
-        <div class="panel-label">1 · Select Origin</div>
+        <div class="panel-label"><span class="sec-n">01</span> Select Origin</div>
         <div class="city-grid" id="city-grid">
-          <button class="city-btn active" data-city="Delhi"     data-lat="28.6"  data-lon="77.2">🇮🇳 Delhi</button>
-          <button class="city-btn"        data-city="New York"  data-lat="40.7"  data-lon="-74.0">🇺🇸 New York</button>
-          <button class="city-btn"        data-city="London"    data-lat="51.5"  data-lon="-0.1">🇬🇧 London</button>
-          <button class="city-btn"        data-city="Tokyo"     data-lat="35.7"  data-lon="139.7">🇯🇵 Tokyo</button>
-          <button class="city-btn"        data-city="Sao Paulo" data-lat="-23.5" data-lon="-46.6">🇧🇷 São Paulo</button>
-          <button class="city-btn"        data-city="Sydney"    data-lat="-33.9" data-lon="151.2">🇦🇺 Sydney</button>
-          <button class="city-btn"        data-city="Lagos"     data-lat="6.5"   data-lon="3.4">🇳🇬 Lagos</button>
-          <button class="city-btn"        data-city="Dubai"     data-lat="25.2"  data-lon="55.3">🇦🇪 Dubai</button>
+          <button class="city-btn active" data-city="Delhi"     data-lat="28.6"  data-lon="77.2"><span class="cc">IN</span>Delhi</button>
+          <button class="city-btn"        data-city="New York"  data-lat="40.7"  data-lon="-74.0"><span class="cc">US</span>New York</button>
+          <button class="city-btn"        data-city="London"    data-lat="51.5"  data-lon="-0.1"><span class="cc">GB</span>London</button>
+          <button class="city-btn"        data-city="Tokyo"     data-lat="35.7"  data-lon="139.7"><span class="cc">JP</span>Tokyo</button>
+          <button class="city-btn"        data-city="Sao Paulo" data-lat="-23.5" data-lon="-46.6"><span class="cc">BR</span>São Paulo</button>
+          <button class="city-btn"        data-city="Sydney"    data-lat="-33.9" data-lon="151.2"><span class="cc">AU</span>Sydney</button>
+          <button class="city-btn"        data-city="Lagos"     data-lat="6.5"   data-lon="3.4"><span class="cc">NG</span>Lagos</button>
+          <button class="city-btn"        data-city="Dubai"     data-lat="25.2"  data-lon="55.3"><span class="cc">AE</span>Dubai</button>
         </div>
       </div>
 
       <div class="panel-section">
-        <div class="panel-label">2 · Request Type</div>
+        <div class="panel-label"><span class="sec-n">02</span> Request Type</div>
         <div class="service-list" id="service-list">
           <button class="service-btn active" data-service="LLM Inference" data-size="2.4 KB" data-compute="high">
-            <span class="svc-icon">🤖</span>
+            <span class="svc-icon"><i data-ic="cpu"></i></span>
             <div><div class="svc-name">LLM Inference</div><div class="svc-detail">ChatGPT · 2.4 KB · high compute</div></div>
           </button>
           <button class="service-btn" data-service="Video Stream" data-size="4K" data-compute="medium">
-            <span class="svc-icon">📺</span>
+            <span class="svc-icon"><i data-ic="video"></i></span>
             <div><div class="svc-name">Video Stream</div><div class="svc-detail">4K CDN · edge cache · medium</div></div>
           </button>
           <button class="service-btn" data-service="Edge AI" data-size="1.1 KB" data-compute="medium">
-            <span class="svc-icon">⚡</span>
+            <span class="svc-icon"><i data-ic="bolt"></i></span>
             <div><div class="svc-name">Edge AI Inference</div><div class="svc-detail">Image classify · 1.1 KB · medium</div></div>
           </button>
           <button class="service-btn" data-service="API Call" data-size="0.3 KB" data-compute="low">
-            <span class="svc-icon">🔌</span>
+            <span class="svc-icon"><i data-ic="api"></i></span>
             <div><div class="svc-name">API Call</div><div class="svc-detail">REST · 0.3 KB · low compute</div></div>
           </button>
         </div>
       </div>
 
       <div class="panel-section">
-        <div class="panel-label">3 · Routing Policy</div>
+        <div class="panel-label"><span class="sec-n">03</span> Routing Policy</div>
         <div class="policy-tabs">
-          <button class="policy-tab" data-policy="latency">⚡ Latency</button>
-          <button class="policy-tab active" data-policy="balanced">⚖️ Balanced</button>
-          <button class="policy-tab" data-policy="green">🌱 Green</button>
-          <button class="policy-tab" data-policy="reliable">🛡️ Reliable</button>
+          <button class="policy-tab" data-policy="latency"><i data-ic="bolt"></i> Latency</button>
+          <button class="policy-tab active" data-policy="balanced"><i data-ic="balance"></i> Balanced</button>
+          <button class="policy-tab" data-policy="green"><i data-ic="leaf"></i> Green</button>
+          <button class="policy-tab" data-policy="reliable"><i data-ic="shield"></i> Reliable</button>
         </div>
         <div class="weight-rows" id="weight-rows">
           <div class="wr"><span class="wr-label">LAT</span><div class="wr-track"><div class="wr-fill" id="w-lat" style="background:var(--cyan)"></div></div><span class="wr-val" id="wv-lat">0.5</span></div>
@@ -86,7 +96,7 @@
       </div>
 
       <div class="panel-section" style="border-bottom:none">
-        <button class="send-btn" id="send-btn">▶ Send Request</button>
+        <button class="send-btn" id="send-btn"><i data-ic="play"></i> Send Request</button>
       </div>
     </div>
 
@@ -97,7 +107,7 @@
       </div>
       <div id="decisions-container" class="decisions-area">
         <div class="empty-state">
-          <div class="empty-icon">🛰️</div>
+          <div class="empty-icon"><i data-ic="satellite"></i></div>
           <p>Hit <strong>Send Request</strong> to watch routing decisions happen in real time with 3D camera choreography.</p>
         </div>
       </div>
@@ -109,7 +119,7 @@
           <div class="metric-box" id="m-solar"><span class="metric-val" id="mv-solar">—</span><span class="metric-label">Solar-Powered</span></div>
           <div class="metric-box" id="m-saa"><span class="metric-val" id="mv-saa">—</span><span class="metric-label">SAA Avoided</span></div>
         </div>
-        <button class="deepdive-btn hidden" id="deepdive-btn">🔬 Technical Deep Dive</button>
+        <button class="deepdive-btn hidden" id="deepdive-btn"><i data-ic="microscope"></i> Technical Deep Dive</button>
         <div id="compare-section" class="hidden" style="margin-top:12px">
           <div class="panel-label" style="margin-bottom:8px">Policy Comparison — this exact request, re-run</div>
           <div id="compare-rows"></div>
@@ -119,8 +129,8 @@
 
     <!-- Speed / playback controls -->
     <div id="playback-controls" class="glass-panel playback">
-      <button class="pb-btn" id="btn-skip" title="Skip to result">⏭</button>
-      <button class="pb-btn" id="btn-replay" title="Replay" disabled>↺</button>
+      <button class="pb-btn" id="btn-skip" title="Skip to result"><i data-ic="skip"></i></button>
+      <button class="pb-btn" id="btn-replay" title="Replay" disabled><i data-ic="replay"></i></button>
       <div class="speed-dial">
         <button class="speed-btn" data-speed="0.5">0.5×</button>
         <button class="speed-btn" data-speed="1">1×</button>
@@ -130,7 +140,7 @@
 
     <!-- Orbital Autopilot — always visible, no click required -->
     <div id="autopilot-panel" class="glass-panel">
-      <div class="panel-label" style="margin-bottom:9px">🛰 Orbital Autopilot</div>
+      <div class="panel-label" style="margin-bottom:9px"><i data-ic="satellite"></i> Orbital Autopilot</div>
       <div id="autopilot-body"></div>
     </div>
 
@@ -146,14 +156,14 @@
 
     <!-- Mobile bottom tab bar -->
     <div id="mobile-tabs">
-      <button class="mob-tab active" data-panel="left">⚙️ Controls</button>
-      <button class="mob-tab" data-panel="right">📊 Results</button>
-      <button class="mob-tab" id="mob-send">▶ Send</button>
+      <button class="mob-tab active" data-panel="left"><i data-ic="settings"></i> Controls</button>
+      <button class="mob-tab" data-panel="right"><i data-ic="chart"></i> Results</button>
+      <button class="mob-tab" id="mob-send"><i data-ic="play"></i> Send</button>
     </div>
 
     <!-- First-run brief: what this is, and where the substance is -->
     <div id="intro-card" class="glass-panel hidden">
-      <button id="intro-close" title="Dismiss">✕</button>
+      <button id="intro-close" title="Dismiss"><i data-ic="close"></i></button>
       <div class="intro-eyebrow">ORBITAL CDN</div>
       <h1 class="intro-title">Two thirds of the planet is far from a cloud region.</h1>
       <p class="intro-body">
@@ -166,10 +176,21 @@
         <b>4 orbital data centres</b>, then <b>learns from every request it has served</b> to route the next one better.
       </p>
       <div class="intro-actions">
-        <button class="intro-btn intro-btn-primary" id="intro-analytics">📊 See 30 days of network history</button>
-        <button class="intro-btn" id="intro-send">▶ Route a request live</button>
+        <button class="intro-btn intro-btn-primary" id="intro-analytics"><i data-ic="chart"></i> See 30 days of network history</button>
+        <button class="intro-btn" id="intro-send"><i data-ic="play"></i> Route a request live</button>
       </div>
       <p class="intro-foot">Findings so far: <span id="intro-stat">loading…</span></p>
+    </div>
+
+    <!-- Bottom status bar -->
+    <div id="status-bar">
+      <div class="sb-left">
+        <i data-ic="infrastructure" data-size="14"></i>
+        <span class="sb-label">AUTOPILOT</span>
+        <span class="sb-pill" id="sb-mode">ASSIST</span>
+      </div>
+      <div class="sb-feed" id="sb-feed"></div>
+      <div class="sb-right"><span id="sb-clock">--:--:--</span> UTC</div>
     </div>
 
     <!-- Reasoning ticker (bottom center) -->
@@ -184,8 +205,8 @@
     <div id="modal-overlay" class="hidden">
       <div id="modal" class="glass-panel modal">
         <div class="modal-header">
-          <div class="modal-title">🔬 Technical Deep Dive — Routing Decision Analysis</div>
-          <button class="modal-close" id="modal-close">✕</button>
+          <div class="modal-title"><i data-ic="microscope"></i> Technical Deep Dive — Routing Decision Analysis</div>
+          <button class="modal-close" id="modal-close"><i data-ic="close"></i></button>
         </div>
         <div class="modal-nav" id="modal-nav"></div>
         <div id="modal-body" class="modal-body"></div>
@@ -197,8 +218,8 @@
   <div id="ap-overlay" class="hidden">
     <div id="dash-panel">
       <div id="dash-topbar">
-        <div class="dash-logo">◎ ORBITAL CDN <span>/ Autopilot</span></div>
-        <button class="dash-close" id="ap-overlay-close">✕ Close</button>
+        <div class="dash-logo"><i data-ic="logo"></i> ORBITAL CDN <span>/ Autopilot</span></div>
+        <button class="dash-close" id="ap-overlay-close"><i data-ic="close"></i> Close</button>
       </div>
       <div id="ap-overlay-body" class="dash-scroll"></div>
     </div>
@@ -208,8 +229,8 @@
   <div id="dash-overlay" class="hidden">
     <div id="dash-panel">
       <div id="dash-topbar">
-        <div class="dash-logo">◎ ORBITAL CDN <span>/ Network Analytics</span></div>
-        <button class="dash-close" id="dash-close">✕ Close</button>
+        <div class="dash-logo"><i data-ic="logo"></i> ORBITAL CDN <span>/ Network Analytics</span></div>
+        <button class="dash-close" id="dash-close"><i data-ic="close"></i> Close</button>
       </div>
       <div id="dash-content"></div>
     </div>
@@ -217,12 +238,12 @@
 
   <!-- Architecture & Insights overlay -->
   <div id="insights-overlay" class="hidden">
-    <button id="insights-close-mob" style="display:none">✕ Close</button>
+    <button id="insights-close-mob" style="display:none"><i data-ic="close"></i> Close</button>
     <div id="insights-page">
       <div id="insights-sidebar">
-        <div class="insights-logo">◎ ORBITAL CDN</div>
+        <div class="insights-logo"><i data-ic="logo"></i> ORBITAL CDN</div>
         <nav id="insights-nav"></nav>
-        <button class="insights-close" id="insights-close">✕ Close</button>
+        <button class="insights-close" id="insights-close"><i data-ic="close"></i> Close</button>
       </div>
       <div id="insights-content"></div>
     </div>

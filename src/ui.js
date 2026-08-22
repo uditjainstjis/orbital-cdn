@@ -103,7 +103,7 @@ export function clearDecisions() {
   const c = document.getElementById('decisions-container')
   if (c) c.innerHTML = `
     <div class="empty-state">
-      <div class="empty-icon">🛰️</div>
+      <div class="empty-icon"><i data-ic="satellite"></i></div>
       <p>Hit <strong>Send Request</strong> to watch routing decisions happen in real time with 3D camera choreography.</p>
     </div>`
 }
@@ -147,7 +147,7 @@ export function setMetrics({ rtt, nHops, solar, saaAvoided, baseline, stretch, c
   if (!host) return
   host.innerHTML = entries.map(([k, v]) => `
     <div class="compare-row${k === activePolicy ? ' compare-active' : ''}">
-      <span class="compare-label">${k[0].toUpperCase() + k.slice(1)}${k === activePolicy ? ' ◂' : ''}</span>
+      <span class="compare-label">${k[0].toUpperCase() + k.slice(1)}${k === activePolicy ? ' ' : ''}</span>
       <div class="compare-track"><div class="compare-fill" style="width:${(v / maxR) * 100}%;background:${COLORS[k]}"></div></div>
       <span class="compare-val">${v}ms</span>
     </div>`).join('')
@@ -173,7 +173,10 @@ export function setSendState(running) {
   const btn = document.getElementById('send-btn')
   if (!btn) return
   btn.disabled    = running
-  btn.textContent = running ? '⏳ Routing…' : lastSimData ? '▶ Send Another' : '▶ Send Request'
+  // innerHTML, not textContent — the label carries an icon placeholder
+  btn.innerHTML = running
+    ? '<span class="spin"></span> Routing…'
+    : `<i data-ic="play" data-size="15"></i> ${lastSimData ? 'Send Another' : 'Send Request'}`
 }
 
 // ─── Deep Dive modal ──────────────────────────────────────────────────────
@@ -248,13 +251,13 @@ RTT_fibre_baseline = <span class="val">${baseline} ms</span>  Delta = <span clas
     <div class="modal-section-title">§2 · Vacuum vs Fiber — The Physics of the ISL Advantage</div>
     <div class="phys-grid">
       <div class="phys-card">
-        <h5>⚡ Vacuum (Laser ISL)</h5>
+        <h5><i data-ic="bolt"></i> Vacuum (Laser ISL)</h5>
         <span class="phys-num">c = 299,792 km/s</span>
         <p>Light in free space. Used on all ISL hops and up/downlink segments. Zero refractive index — pure vacuum propagation.</p>
         <p style="margin-top:8px">One-way: <strong style="color:var(--green)">${propVac} ms</strong> for ${baseDist} km</p>
       </div>
       <div class="phys-card">
-        <h5>🌍 Fiber (Terrestrial Baseline)</h5>
+        <h5><i data-ic="globe"></i> Fiber (Terrestrial Baseline)</h5>
         <span class="phys-num">c/1.47 ≈ 203,940 km/s</span>
         <p>Silica refractive index ≈ 1.47. Every terrestrial backbone segment pays this penalty — unavoidable in ground networks.</p>
         <p style="margin-top:8px">Same path would be: <strong style="color:var(--red)">${propFib} ms</strong> → ISL saves <strong style="color:var(--cyan)">${saving} ms</strong> one-way</p>
@@ -277,7 +280,7 @@ score = <span class="val">${w.lat}</span>·dist + <span class="val">${w.sol}</sp
       <tbody>${sortedDCs.map(dc => `
         <tr class="${dc.dcName === d.dc.dcName ? 'winner' : ''}">
           <td><strong>${dc.dcName}</strong></td>
-          <td>${dc.eclipsed ? '<span style="color:var(--muted)">🌑 Eclipse</span>' : '<span style="color:var(--amber)">☀️ Sunlit</span>'}</td>
+          <td>${dc.eclipsed ? '<span style="color:var(--muted)"><i data-ic="eclipse"></i> Eclipse</span>' : '<span style="color:var(--amber)"><i data-ic="sun"></i> Sunlit</span>'}</td>
           <td style="font-family:'JetBrains Mono',monospace">${(dc.battery * 100).toFixed(0)}%</td>
           <td style="font-family:'JetBrains Mono',monospace">${(dc.load * 100).toFixed(0)}%</td>
           <td style="font-family:'JetBrains Mono',monospace">${dc.scoreDist}</td>
@@ -297,9 +300,9 @@ score = <span class="val">${w.lat}</span>·dist + <span class="val">${w.sol}</sp
 <span class="cmt">// Total hops: ${d.nHops + 2} · SAA crossings: ${d.saaCross}</span></div>
     <div>${[
       { label: 'User',      dot: '#fff',     val: `${d.city.city} (${d.city.lat.toFixed(1)}°, ${d.city.lon.toFixed(1)}°)`,       note: 'Origin' },
-      { label: 'Uplink',   dot: '#00d4ff',  val: `SAT-${d.uplink.id} @ ${d.uplink.lat.toFixed(1)}°, ${d.uplink.lon.toFixed(1)}°`, note: d.uplink.inSAA ? '⚠️ near SAA' : 'clear' },
-      ...d.hopSats.map((h, i) => ({ label: `Relay ${i + 1}`, dot: '#00ff88', val: `${h.lat.toFixed(1)}°, ${h.lon.toFixed(1)}°`, note: h.inSAA ? '⚠️ SAA' : 'clear' })),
-      { label: 'Orb DC',   dot: '#f59e0b',  val: `${d.dc.dcName} @ ${d.dc.lat.toFixed(1)}°, ${d.dc.lon.toFixed(1)}°`,           note: d.dc.eclipsed ? '🌑 Eclipse' : '☀️ Sunlit' },
+      { label: 'Uplink',   dot: '#00d4ff',  val: `SAT-${d.uplink.id} @ ${d.uplink.lat.toFixed(1)}°, ${d.uplink.lon.toFixed(1)}°`, note: d.uplink.inSAA ? '<i data-ic="warning"></i> near SAA' : 'clear' },
+      ...d.hopSats.map((h, i) => ({ label: `Relay ${i + 1}`, dot: '#00ff88', val: `${h.lat.toFixed(1)}°, ${h.lon.toFixed(1)}°`, note: h.inSAA ? '<i data-ic="warning"></i> SAA' : 'clear' })),
+      { label: 'Orb DC',   dot: '#f59e0b',  val: `${d.dc.dcName} @ ${d.dc.lat.toFixed(1)}°, ${d.dc.lon.toFixed(1)}°`,           note: d.dc.eclipsed ? '<i data-ic="eclipse"></i> Eclipse' : '<i data-ic="sun"></i> Sunlit' },
       ...d.hopSats.slice().reverse().map((h, i) => ({ label: `Relay ${d.nHops - i}`, dot: '#00ff88', val: `${h.lat.toFixed(1)}°, ${h.lon.toFixed(1)}°`, note: 'return path' })),
       { label: 'GW Sat',   dot: '#00d4ff',  val: `SAT-${d.gwSat.id} @ ${d.gwSat.lat.toFixed(1)}°, ${d.gwSat.lon.toFixed(1)}°`,  note: 'downlink node' },
       { label: 'Gateway',  dot: '#10b981',  val: `${d.gw.name} (${d.gw.lat.toFixed(1)}°, ${d.gw.lon.toFixed(1)}°)`,              note: d.gw.weather },
@@ -327,7 +330,7 @@ score = <span class="val">${w.lat}</span>·dist + <span class="val">${w.wx}</spa
       <tbody>${sortedGWs.map(g => `
         <tr class="${g.name === d.gw.name ? 'winner' : ''}">
           <td><strong>${g.name}</strong></td>
-          <td>${g.weather === 'clear' ? '✅ Clear' : g.weather === 'rain' ? '🌧️ Rain' : '🌥️ Cloudy'}</td>
+          <td>${g.weather === 'clear' ? '<i data-ic="check"></i> Clear' : g.weather === 'rain' ? '<i data-ic="rain"></i> Rain' : '<i data-ic="cloud"></i> Cloudy'}</td>
           <td style="font-family:'JetBrains Mono',monospace">${g.scoreDist}</td>
           <td style="font-family:'JetBrains Mono',monospace;color:${g.weather === 'clear' ? 'var(--green)' : g.weather === 'rain' ? 'var(--red)' : 'var(--amber)'}">${g.scoreWx}</td>
           <td style="font-family:'JetBrains Mono',monospace;color:var(--cyan)"><strong>${g.scoreTotal}</strong></td>
@@ -341,23 +344,23 @@ score = <span class="val">${w.lat}</span>·dist + <span class="val">${w.wx}</spa
     <div class="modal-section-title">§6 · Radiation Model — SAA &amp; Eclipse</div>
     <div class="phys-grid">
       <div class="phys-card">
-        <h5>☢️ South Atlantic Anomaly</h5>
+        <h5><i data-ic="radiation"></i> South Atlantic Anomaly</h5>
         <p>Inner Van Allen belt dips to ~200 km. Bounding box: lat [−50°, 0°], lon [−80°, +10°]. ${d.saaCross} ISL hop(s) crossed SAA on this path.</p>
         <p style="margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:11px;color:${d.saaCross > 0 ? 'var(--red)' : 'var(--green)'}">
           ${d.saaCross > 0 ? `${d.saaCross} crossings — radiation penalty active` : '0 crossings — SAA fully avoided ✓'}
         </p>
       </div>
       <div class="phys-card">
-        <h5>🔬 Radiation Penalty Term</h5>
+        <h5><i data-ic="microscope"></i> Radiation Penalty Term</h5>
         <p>R_n = 𝟙[node n ∈ SAA] · severity(Kp). Severity scales with geomagnetic Kp index. Google Suncatcher found HBM DRAM most susceptible to TID; SEEs flagged in real training runs.</p>
         <p style="margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--cyan)">w_rad = ${w.rad} (${d.policy} policy)</p>
       </div>
       <div class="phys-card">
-        <h5>🌑 Eclipse Model</h5>
+        <h5><i data-ic="eclipse"></i> Eclipse Model</h5>
         <p>Cylindrical umbra approximation. Eclipse when angular separation from sun vector &gt; 128°. DC-${d.dc.dcName} in eclipse: <strong style="color:${d.dc.eclipsed ? 'var(--red)' : 'var(--green)'}">${d.dc.eclipsed ? 'YES — battery active' : 'NO — sunlit'}</strong></p>
       </div>
       <div class="phys-card">
-        <h5>🔋 Solar/Eclipse Term</h5>
+        <h5><i data-ic="battery"></i> Solar/Eclipse Term</h5>
         <p>S_n = 𝟙[eclipse] · (1 − battery_SoC)</p>
         <p style="margin-top:6px">DC battery: <strong style="font-family:'JetBrains Mono',monospace">${(d.dc.battery * 100).toFixed(0)}%</strong> SoC. ${d.dc.eclipsed ? `Penalty = 1 × ${(1 - d.dc.battery).toFixed(2)}` : 'Penalty = 0 (sunlit)'}</p>
         <p style="margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--cyan)">w_sol = ${w.sol} (${d.policy} policy)</p>
@@ -372,7 +375,7 @@ score = <span class="val">${w.lat}</span>·dist + <span class="val">${w.wx}</spa
 <span class="cmt">// variable is the policy itself. See comparePolicies() in src/engine.js.</span>
 ${['latency', 'balanced', 'green', 'reliable'].map(pol => {
   const cf   = d.counterfactual?.[pol]
-  const icon = { latency: '⚡', balanced: '⚖️', green: '🌱', reliable: '🛡️' }[pol]
+  const icon = { latency: '<i data-ic="bolt"></i>', balanced: '<i data-ic="balance"></i>', green: '<i data-ic="leaf"></i>', reliable: '<i data-ic="shield"></i>' }[pol]
   const w    = POLICY_WEIGHTS[pol]
   const mine = pol === d.policy
   const val  = Number.isFinite(cf) ? `${cf} ms` : 'n/a'
@@ -408,9 +411,9 @@ elev_mask = <span class="val">25°</span>            <span class="cmt">// Starli
 <span class="cmt">// Google Suncatcher preprint (2025)        — solar/radiation/optical physics</span>
 <span class="cmt">// ITU-R P.618                              — Ka-band rain-fade attenuation model</span></div>
     <p style="font-size:11px;color:var(--muted);margin-top:14px">
-      🌍 Earth textures: NASA Blue Marble / Black Marble (CC) via three-globe ·
-      🛰️ TLE data: CelesTrak (Space-Track.org) ·
-      📐 SGP4 propagation: satellite.js
+      <i data-ic="globe"></i> Earth textures: NASA Blue Marble / Black Marble (CC) via three-globe ·
+      <i data-ic="satellite"></i> TLE data: CelesTrak (Space-Track.org) ·
+      <i data-ic="blueprint"></i> SGP4 propagation: satellite.js
     </p>
   </div>`
 }
@@ -427,10 +430,10 @@ export function showInspector(node, x, y) {
     // ── Orbital Data Center ────────────────────────────────────────────────
     const solar = !node.eclipsed
     html = `
-      <h4 style="color:var(--amber)">🛰️ ${node.dcName} — Orbital DC</h4>
+      <h4 style="color:var(--amber)"><i data-ic="satellite"></i> ${node.dcName} — Orbital DC</h4>
       <div class="inspector-row">
         <span class="inspector-key">Status</span>
-        <span class="inspector-val" style="color:${solar ? 'var(--green)' : 'var(--muted)'}">${solar ? '☀ SUNLIT' : '🌑 ECLIPSE'}</span>
+        <span class="inspector-val" style="color:${solar ? 'var(--green)' : 'var(--muted)'}">${solar ? '<i data-ic="sun"></i> SUNLIT' : '<i data-ic="eclipse"></i> ECLIPSE'}</span>
       </div>
       <div class="inspector-row"><span class="inspector-key">Lat / Lon</span><span class="inspector-val">${node.lat.toFixed(1)}° ${node.lon.toFixed(1)}°</span></div>
       <div class="inspector-row"><span class="inspector-key">Altitude</span><span class="inspector-val">${node.alt.toFixed(0)} km</span></div>
@@ -440,18 +443,18 @@ export function showInspector(node, x, y) {
         <div style="width:${(node.battery*100).toFixed(0)}%;height:100%;background:${node.battery>0.4?'var(--green)':'var(--amber)'};border-radius:2px"></div>
       </div>
       <div class="inspector-row"><span class="inspector-key">Compute</span><span class="inspector-val">${(node.load*100).toFixed(0)}% load</span></div>
-      <div class="inspector-row"><span class="inspector-key">Radiation</span><span class="inspector-val" style="color:${node.inSAA?'var(--red)':'var(--green)'}">${node.inSAA?'⚠ SAA':'✓ clean'}</span></div>
+      <div class="inspector-row"><span class="inspector-key">Radiation</span><span class="inspector-val" style="color:${node.inSAA?'var(--red)':'var(--green)'}">${node.inSAA?'<i data-ic="warning"></i> SAA':'✓ clean'}</span></div>
       <div style="margin-top:8px;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace">Plane ${node.plane} · Slot ${node.slot} · ID ${node.id}</div>
     `
   } else if (node.name) {
     // ── Ground Gateway ─────────────────────────────────────────────────────
-    html = `<h4>◇ ${node.name}</h4><div class="inspector-row"><span class="inspector-key">Type</span><span class="inspector-val">Ground Gateway</span></div>`
+    html = `<h4> ${node.name}</h4><div class="inspector-row"><span class="inspector-key">Type</span><span class="inspector-val">Ground Gateway</span></div>`
   } else {
     // ── LEO Relay Satellite ────────────────────────────────────────────────
     const statusColor = node.inSAA ? 'var(--red)' : node.eclipsed ? 'var(--muted)' : 'var(--cyan)'
-    const statusText  = node.inSAA ? '⚠ SAA ZONE' : node.eclipsed ? '🌑 ECLIPSE' : '☀ NOMINAL'
+    const statusText  = node.inSAA ? '<i data-ic="warning"></i> SAA ZONE' : node.eclipsed ? '<i data-ic="eclipse"></i> ECLIPSE' : '<i data-ic="sun"></i> NOMINAL'
     html = `
-      <h4 style="color:var(--cyan)">📡 LEO-${String(node.id).padStart(2,'0')}</h4>
+      <h4 style="color:var(--cyan)"><i data-ic="antenna"></i> LEO-${String(node.id).padStart(2,'0')}</h4>
       <div class="inspector-row">
         <span class="inspector-key">Status</span>
         <span class="inspector-val" style="color:${statusColor}">${statusText}</span>

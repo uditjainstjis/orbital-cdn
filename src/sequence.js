@@ -82,11 +82,11 @@ export async function runSequence(data, world) {
   world.controls().autoRotate = false
 
   // ── BEAT 1: Origin lock (2 s) ─────────────────────────────────────────
-  _setTicker(`📍 Locking origin: ${city.city} at ${city.lat.toFixed(1)}°N, ${city.lon.toFixed(1)}°E`)
+  _setTicker(`<i data-ic="origin"></i> Locking origin: ${city.city} at ${city.lat.toFixed(1)}°N, ${city.lon.toFixed(1)}°E`)
   pov(city.lat, city.lon, 1.4, 1800)
   await sleep(400)
   _addDecision({
-    icon: '📍', bg: 'rgba(0,212,255,0.15)', title: 'Origin Locked',
+    icon: '<i data-ic="origin"></i>', bg: 'rgba(0,212,255,0.15)', title: 'Origin Locked',
     body: `Request originates from <b>${city.city}</b> (${city.lat.toFixed(1)}°, ${city.lon.toFixed(1)}°). Ground terminal elevation mask ≥ 25°.`,
     hl: `${city.city} → Orbital CDN network`, hlColor: '#00d4ff',
     step: 1,
@@ -94,7 +94,7 @@ export async function runSequence(data, world) {
   await sleep(1800)
 
   // ── BEAT 2: Uplink satellite (2 s) ───────────────────────────────────
-  _setTicker(`📡 Selecting uplink — nearest satellite at 25°+ elevation mask`)
+  _setTicker(`<i data-ic="antenna"></i> Selecting uplink — nearest satellite at 25°+ elevation mask`)
   pov((city.lat + uplink.lat) / 2, (city.lon + uplink.lon) / 2, 0.9, 1600)
   await sleep(300)
 
@@ -106,15 +106,15 @@ export async function runSequence(data, world) {
   })
 
   _addDecision({
-    icon: '📡', bg: 'rgba(0,212,255,0.15)', title: 'Uplink Satellite Selected',
+    icon: '<i data-ic="antenna"></i>', bg: 'rgba(0,212,255,0.15)', title: 'Uplink Satellite Selected',
     body: `Nearest satellite to <b>${city.city}</b> above 25° elevation mask. Vacuum laser: <b>c = 299,792 km/s</b> — 40% faster than fiber.`,
-    hl: `SAT-${uplink.id} @ ${uplink.lat.toFixed(1)}°, ${uplink.lon.toFixed(1)}° ${uplink.inSAA ? '⚠️ near SAA' : ''}`,
+    hl: `SAT-${uplink.id} @ ${uplink.lat.toFixed(1)}°, ${uplink.lon.toFixed(1)}° ${uplink.inSAA ? '<i data-ic="warning"></i> near SAA' : ''}`,
     hlColor: '#00d4ff', step: 2,
   })
   await sleep(2200)
 
   // ── BEAT 3: DC selection (4 s) ───────────────────────────────────────
-  _setTicker(`🛰️ Scoring ${data.allDCs.length} orbital DCs against ${policy} cost function…`)
+  _setTicker(`<i data-ic="satellite"></i> Scoring ${data.allDCs.length} orbital DCs against ${policy} cost function…`)
   // Pull back to see all DCs
   pov(dc.lat, dc.lon, 2.2, 2500)
   await sleep(800)
@@ -122,21 +122,21 @@ export async function runSequence(data, world) {
   const dcNote = policy === 'latency'
     ? 'Nearest DC selected (latency-first — ignoring solar/SAA).'
     : policy === 'green'
-      ? (dc.eclipsed ? 'No sunlit DC scored best — this one is eclipsed and running on stored charge.' : '☀️ Sunlit DC selected — compute runs on live solar, no battery draw.')
+      ? (dc.eclipsed ? 'No sunlit DC scored best — this one is eclipsed and running on stored charge.' : '<i data-ic="sun"></i> Sunlit DC selected — compute runs on live solar, no battery draw.')
       : policy === 'reliable'
-        ? (dc.inSAA ? '⚠️ All SAA-free DCs too far — accepted radiation risk.' : 'SAA-free DC chosen — hardware radiation safe.')
-        : `${dc.eclipsed ? '🔋 Battery' : '☀️ Sunlit'} DC via balanced multi-objective cost.`
+        ? (dc.inSAA ? '<i data-ic="warning"></i> All SAA-free DCs too far — accepted radiation risk.' : 'SAA-free DC chosen — hardware radiation safe.')
+        : `${dc.eclipsed ? '<i data-ic="battery"></i> Battery' : '<i data-ic="sun"></i> Sunlit'} DC via balanced multi-objective cost.`
 
   _addDecision({
-    icon: '🛰️', bg: 'rgba(245,158,11,0.15)', title: `Orbital DC Selected: ${dc.dcName}`,
+    icon: '<i data-ic="satellite"></i>', bg: 'rgba(245,158,11,0.15)', title: `Orbital DC Selected: ${dc.dcName}`,
     body: dcNote + ` Battery SoC ${(dc.battery * 100).toFixed(0)}%. Winning cost <b>${(+dc.cost).toFixed(1)} ms</b> of latency-equivalent penalty, against ${data.allDCs.length - 1} alternatives.`,
-    hl: dc.eclipsed ? '🌑 ECLIPSED — battery drain active' : '☀️ SUNLIT — solar powered',
+    hl: dc.eclipsed ? '<i data-ic="eclipse"></i> ECLIPSED — battery drain active' : '<i data-ic="sun"></i> SUNLIT — solar powered',
     hlColor: dc.eclipsed ? '#ef4444' : '#f59e0b', step: 3,
   })
   await sleep(3200)
 
   // ── BEAT 4: ISL traversal — hop by hop (7 s) ─────────────────────────
-  _setTicker(`⚡ Routing ${nHops + 2} ISL hops at 100 Gbps laser links…`)
+  _setTicker(`<i data-ic="bolt"></i> Routing ${nHops + 2} ISL hops at 100 Gbps laser links…`)
 
   // Uplink → first relay
   pov(uplink.lat, uplink.lon, 0.8, 1200)
@@ -151,7 +151,7 @@ export async function runSequence(data, world) {
   for (let i = 0; i < hopSats.length - 1; i++) {
     pov(hopSats[i].lat, hopSats[i].lon, 0.85, 900)
     if (hopSats[i].inSAA) {
-      _setTicker('⚠️ Hop entering SAA zone — radiation penalty applied to cost function')
+      _setTicker('<i data-ic="warning"></i> Hop entering SAA zone — radiation penalty applied to cost function')
     }
     addArc({
       startLat: hopSats[i].lat,    startLng: hopSats[i].lon,
@@ -173,7 +173,7 @@ export async function runSequence(data, world) {
   await sleep(700)
 
   _addDecision({
-    icon: '⚡', bg: 'rgba(0,255,136,0.1)', title: `ISL Path: ${nHops + 2} hops`,
+    icon: '<i data-ic="bolt"></i>', bg: 'rgba(0,255,136,0.1)', title: `ISL Path: ${nHops + 2} hops`,
     body: policy === 'latency'
       ? 'Shortest hop count. Vacuum ISL 40% faster than terrestrial fiber for intercontinental distances.'
       : saaCross > 0 && policy === 'reliable'
@@ -185,19 +185,19 @@ export async function runSequence(data, world) {
   await sleep(600)
 
   // ── BEAT 5: Compute at DC (3 s) ──────────────────────────────────────
-  _setTicker(`🖥️ Computing at ${dc.dcName} — ${data.service.compute} compute service…`)
+  _setTicker(`<i data-ic="server"></i> Computing at ${dc.dcName} — ${data.service.compute} compute service…`)
   pov(dc.lat, dc.lon, 0.6, 1500)
   await sleep(1500)
   _addDecision({
-    icon: '🖥️', bg: 'rgba(124,58,237,0.15)', title: `Computing at ${dc.dcName}`,
+    icon: '<i data-ic="server"></i>', bg: 'rgba(124,58,237,0.15)', title: `Computing at ${dc.dcName}`,
     body: `Processing <b>${data.service.service}</b> (${data.service.size}) — ${procMs} ms inference delay.${dc.eclipsed ? ' Running on battery — eclipse active.' : ' Powered by direct solar radiation.'}`,
-    hl: `T_proc = ${procMs} ms · ${dc.eclipsed ? '🔋 Battery SoC ' + (dc.battery * 100).toFixed(0) + '%' : '☀️ Solar 100%'}`,
+    hl: `T_proc = ${procMs} ms · ${dc.eclipsed ? '<i data-ic="battery"></i> Battery SoC ' + (dc.battery * 100).toFixed(0) + '%' : '<i data-ic="sun"></i> Solar 100%'}`,
     hlColor: '#7c3aed', step: 5,
   })
   await sleep(1800)
 
   // ── BEAT 6: Gateway selection (4 s) ──────────────────────────────────
-  _setTicker(`🌍 Evaluating ${data.allGWs.length} ground gateways — site diversity via weather avoidance…`)
+  _setTicker(`<i data-ic="globe"></i> Evaluating ${data.allGWs.length} ground gateways — site diversity via weather avoidance…`)
   pov(gw.lat, gw.lon, 1.6, 2000)
   await sleep(700)
 
@@ -206,9 +206,9 @@ export async function runSequence(data, world) {
     : `<b>${gw.name}</b> scored best despite ${gw.weather} — the ${gw.weather === 'rain' ? '22' : '8'} ms fade still beat the alternatives on total cost.`
 
   _addDecision({
-    icon: '🌍', bg: 'rgba(16,185,129,0.15)', title: `Gateway: ${gw.name}`,
+    icon: '<i data-ic="globe"></i>', bg: 'rgba(16,185,129,0.15)', title: `Gateway: ${gw.name}`,
     body: gwNote,
-    hl: `Weather: ${gw.weather === 'clear' ? '✅ Clear skies' : gw.weather === 'rain' ? '🌧️ Rain — Ka-band fade' : '🌥️ Cloudy — minor attenuation'}`,
+    hl: `Weather: ${gw.weather === 'clear' ? '<i data-ic="check"></i> Clear skies' : gw.weather === 'rain' ? '<i data-ic="rain"></i> Rain — Ka-band fade' : '<i data-ic="cloud"></i> Cloudy — minor attenuation'}`,
     hlColor: gwWeatherColor(gw.weather), step: 6,
   })
   await sleep(3400)
@@ -222,9 +222,9 @@ export async function runSequence(data, world) {
     const avoided  = worstGw && worstGw[0] !== gw.name && worstGw[1] > 0.2
     const recommend = p.cityBest[city.city]
 
-    _setTicker(`🧠 Applying ${p.sampleN} requests of observed history to this route…`)
+    _setTicker(`<i data-ic="brain"></i> Applying ${p.sampleN} requests of observed history to this route…`)
     _addDecision({
-      icon: '🧠', bg: 'rgba(124,58,237,0.16)', title: 'Adaptation Applied',
+      icon: '<i data-ic="brain"></i>', bg: 'rgba(124,58,237,0.16)', title: 'Adaptation Applied',
       body: `Learned from <b>${p.sampleN}</b> logged requests. `
           + (avoided
               ? `<b>${worstGw[0]}</b> carries a <b>${worstGw[1].toFixed(2)}</b> observed rain-fade penalty, so it was down-weighted; <b>${gw.name}</b> won instead (penalty ${gwPen.toFixed(2)}).`
@@ -241,7 +241,7 @@ export async function runSequence(data, world) {
   }
 
   // ── BEAT 7: Downlink + return (2.5 s) ────────────────────────────────
-  _setTicker(`↩️ Return path: ${dc.dcName} → ${gw.name} → ${city.city}`)
+  _setTicker(`↩ Return path: ${dc.dcName} → ${gw.name} → ${city.city}`)
   pov((dc.lat + gw.lat) / 2, (dc.lon + gw.lon) / 2, 1.3, 1400)
 
   // DC → gateway arc (return path)
@@ -276,9 +276,9 @@ export async function runSequence(data, world) {
   const saving       = (propDelayFib - propDelayVac).toFixed(1)
 
   _addDecision({
-    icon: '✅', bg: 'rgba(0,212,255,0.12)', title: 'Request Complete',
+    icon: '<i data-ic="check"></i>', bg: 'rgba(0,212,255,0.12)', title: 'Request Complete',
     body: `Processed at ${dc.dcName}. Returned via ${gw.name}. Vacuum ISL saved ~${saving} ms vs terrestrial fiber.`,
-    hl: `RTT ${rtt} ms · ${stretch <= 0 ? `${Math.abs(stretch)}% faster than fibre` : `${stretch}% slower than fibre`} · ${dc.eclipsed ? '🔋 Battery' : '☀️ Solar'}`,
+    hl: `RTT ${rtt} ms · ${stretch <= 0 ? `${Math.abs(stretch)}% faster than fibre` : `${stretch}% slower than fibre`} · ${dc.eclipsed ? '<i data-ic="battery"></i> Battery' : '<i data-ic="sun"></i> Solar'}`,
     hlColor: '#00d4ff', step: 8,
   })
 
