@@ -426,6 +426,63 @@ export function renderDashboard() {
 
 export function getLearnWindow() { return currentWindow }
 
+/**
+ * The idle right-hand panel. Previously an empty "Hit Send Request" placeholder
+ * — the most valuable real estate on the page showing nothing. It now carries
+ * the round-2 result, so the summary is visible at t=0 without a single click.
+ */
+export function renderIdleSummary() {
+  const host = document.getElementById('decisions-container')
+  if (!host) return
+  const s = summarize('7d')
+  if (!s.overall.n) return
+
+  const rank = [...s.byCity].filter(c => c.n >= 3).sort((a, b) => b.winRate - a.winRate)
+  const top  = rank.slice(0, 4)
+  const bot  = rank.slice(-2).reverse()
+  const pol  = [...s.byPolicy].filter(p => p.n >= 20).sort((a, b) => a.p50 - b.p50)
+
+  const row = (r) => {
+    const col = r.winRate > 0.5 ? 'var(--green)' : 'var(--red)'
+    return `<div class="idle-row">
+      <span class="idle-key">${r.key}</span>
+      <div class="idle-track"><div class="idle-fill" style="width:${r.winRate * 100}%;background:${col}"></div></div>
+      <span class="idle-val" style="color:${col}">${pct(r.winRate)}</span>
+    </div>`
+  }
+
+  host.innerHTML = `
+    <div class="idle-summary">
+      <div class="idle-badge">LAST 7 DAYS · ${num(s.overall.n)} REQUESTS</div>
+
+      <div class="idle-hero">
+        <span class="idle-hero-num">${pct(s.overall.winRate)}</span>
+        <span class="idle-hero-lbl">of requests beat terrestrial fibre<br/>
+          <b>saving ${ms(s.overall.savedMs)}</b> on the ones that won</span>
+      </div>
+
+      <div class="idle-stats">
+        <div><b>${ms(s.overall.p50)}</b><span>p50 RTT</span></div>
+        <div><b>${ms(s.overall.p95)}</b><span>p95 tail</span></div>
+        <div><b>${pct(s.overall.solar)}</b><span>solar</span></div>
+      </div>
+
+      <div class="idle-sec">Where orbital wins</div>
+      ${top.map(row).join('')}
+      <div class="idle-sep">…and where it loses</div>
+      ${bot.map(row).join('')}
+
+      ${pol.length ? `<div class="idle-sep">Fastest policy observed</div>
+        <div class="idle-note"><b>${pol[0].key}</b> ${ms(pol[0].p50)} p50 · ${pol[0].n} reqs${
+          pol.length > 1 ? ` &nbsp;vs&nbsp; <b>${pol[pol.length - 1].key}</b> ${ms(pol[pol.length - 1].p50)}` : ''}</div>` : ''}
+
+      <button class="idle-cta" id="idle-open">📊 Open full analytics</button>
+      <div class="idle-foot"><b>Send Request</b> routes using this history.</div>
+    </div>`
+
+  host.querySelector('#idle-open')?.addEventListener('click', openDashboard)
+}
+
 export function openDashboard() {
   const overlay = document.getElementById('dash-overlay')
   if (!overlay) return

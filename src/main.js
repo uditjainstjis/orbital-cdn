@@ -15,7 +15,7 @@ import {
   addDecision, clearDecisions, setTicker, setMetrics, resetMetrics,
   setSendState, showDeepDive, showInspector, hideInspector,
 } from './ui.js'
-import { initDashboard, renderDashboard, getLearnWindow, openDashboard } from './dashboard.js'
+import { initDashboard, renderDashboard, getLearnWindow, openDashboard, renderIdleSummary } from './dashboard.js'
 import { record, eventCount, seedEvents, adaptiveEnabled, summarize } from './telemetry.js'
 import { generateHistory } from './seed.js'
 
@@ -65,6 +65,7 @@ async function main() {
   initDashboard({ onChange: updateAdaptiveBadge, onReset: ensureHistory })
   updateAdaptiveBadge()
   initIntro()
+  renderIdleSummary()
   initCityGrid(city => {
     setSelectedCity(city.city, world)
     if (!isRunning()) world.pointOfView({ lat: city.lat, lng: city.lon, altitude: 1.8 }, 1200)
@@ -134,6 +135,10 @@ async function main() {
   // 8. Skip / replay
   document.getElementById('btn-skip').addEventListener('click', () => {
     if (isRunning()) skipSequence()
+  })
+
+  document.getElementById('btn-summary')?.addEventListener('click', () => {
+    if (!isRunning()) renderIdleSummary()
   })
 
   document.getElementById('btn-replay').addEventListener('click', async () => {
@@ -278,7 +283,12 @@ function updateAdaptiveBadge() {
   const el = document.getElementById('adaptive-badge')
   if (!el) return
   const on = adaptiveEnabled()
-  el.textContent = on ? `◈ ADAPTIVE · ${eventCount()} REQS` : `◈ FIXED POLICY · ${eventCount()} REQS`
+  let head = `${eventCount()} REQS`
+  try {
+    const s = summarize('7d')
+    if (s.overall.n) head = `${(s.overall.winRate * 100).toFixed(0)}% BEAT FIBRE · ${s.overall.p50}ms p50`
+  } catch { /* fall back to the count */ }
+  el.textContent = on ? `◈ ADAPTIVE · ${head}` : `◈ FIXED POLICY · ${head}`
   el.classList.toggle('badge-adaptive-on', on)
   const overlay = document.getElementById('dash-overlay')
   if (overlay && !overlay.classList.contains('hidden')) renderDashboard()
