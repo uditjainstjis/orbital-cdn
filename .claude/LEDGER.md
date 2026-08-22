@@ -541,3 +541,9 @@ to the spec's premise: observing removes 78 of 80 failures, forecasting the last
 - [2026-08-22 19:39]
   > [Image #4] can you make the ui something like this also can you please change all the emojis with icons and other stuff currently it looks too much ai generated
 
+- [2026-08-22 21:03]
+  > make a docs which if i share to a non-technical person or a PM then he should understand what our idea is and also see our technical hardwork and research 
+  > keep in mind this is a hackathon project and we have to absolutely nail it and win it 
+  > 
+  > also you have to make a quick product demo video using remotion of not more that 90-95 seconds with smooth high paced animation also generate the script that we record along with the video the video should capture our complete idea and should depict our innovation
+

@@ -1,0 +1,15 @@
+{
+  "name": "orbital-cdn-video",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "studio": "remotion studio",
+    "render": "remotion render OrbitalCDN out/orbital-cdn.mp4 --concurrency=4"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.240",
+    "remotion": "4.0.240",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  }
+}
