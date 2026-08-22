@@ -562,3 +562,9 @@ to the spec's premise: observing removes 78 of 80 failures, forecasting the last
 
 Udit, verbatim: *"push project to deployment"* — already live; verified rather than re-pushed.
 Only the ledger was dirty; committed it.
+- [2026-08-22 23:50]
+  > also, if i have to explain to someone about its innovation what to tell, someone asked me cdn i struggled to answer, someone asked how does it actually help etc shit, i said some bullshit that data centers in space and gonna reduce latency idk
+
+- [2026-08-22 23:54]
+  > remove night lights totally
+

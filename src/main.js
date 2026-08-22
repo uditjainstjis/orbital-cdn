@@ -4,7 +4,7 @@ import * as THREE from 'three'
 import { initIcons } from './icons.js'
 import { crossoverSvg, crossoverLegend } from './crossover.js'
 import { initInsights } from './insights.js'
-import { initGlobe, getWorld, updateEarth, toggleClouds, toggleNightLights } from './globe.js'
+import { initGlobe, getWorld, updateEarth, toggleClouds } from './globe.js'
 import { initSatellites, updateSatellites, sats, satBodyMeshes, sunlitDCCount, toggleISL } from './sats.js'
 import { initNetwork, setSelectedCity, toggleSAA, updateWeather } from './network.js'
 import { runSimulation } from './engine.js'
@@ -199,7 +199,6 @@ async function main() {
   document.getElementById('toggle-isl')?.addEventListener('change', e => toggleISL(e.target.checked))
   document.getElementById('toggle-saa')?.addEventListener('change', e => toggleSAA(e.target.checked, world))
   document.getElementById('toggle-clouds')?.addEventListener('change', e => toggleClouds(e.target.checked))
-  document.getElementById('toggle-night')?.addEventListener('change', e => toggleNightLights(e.target.checked))
   document.getElementById('toggle-trails')?.addEventListener('change', () => {}) // future
 
   // 11. UTC clock

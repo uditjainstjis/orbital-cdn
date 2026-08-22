@@ -4,13 +4,12 @@ import * as THREE from 'three'
 // Textures bundled with three-globe (via unpkg)
 const T = {
   day:    '//unpkg.com/three-globe/example/img/earth-blue-marble.jpg',
-  night:  '//unpkg.com/three-globe/example/img/earth-night.jpg',
   bump:   '//unpkg.com/three-globe/example/img/earth-topology.png',
   clouds: '//unpkg.com/three-globe/example/img/earth-water.png',
   stars:  '//unpkg.com/three-globe/example/img/night-sky.png',
 }
 
-let world, cloudMesh, nightMesh, atmMesh
+let world, cloudMesh, atmMesh
 
 export function initGlobe(container) {
   world = Globe()
@@ -36,48 +35,6 @@ export function initGlobe(container) {
   const scene = world.scene()
   const GLOBE_R = world.getGlobeRadius()
   const loader = new THREE.TextureLoader()
-
-  // Night lights / city lights on dark side
-  loader.load(T.night, tex => {
-    const mat = new THREE.ShaderMaterial({
-      uniforms: {
-        nightMap: { value: tex },
-        sunDir:   { value: new THREE.Vector3(1, 0, 0) },
-      },
-      vertexShader: /* glsl */`
-        varying vec2 vUv;
-        varying vec3 vWorldNormal;
-        void main() {
-          vUv = uv;
-          vWorldNormal = normalize((modelMatrix * vec4(normal, 0.0)).xyz);
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: /* glsl */`
-        uniform sampler2D nightMap;
-        uniform vec3 sunDir;
-        varying vec2 vUv;
-        varying vec3 vWorldNormal;
-        void main() {
-          float cosA  = dot(vWorldNormal, normalize(sunDir));
-          float night = smoothstep(0.05, -0.2, cosA);
-          vec4 c = texture2D(nightMap, vUv);
-          // Boost city lights contrast
-          vec3 lit = c.rgb * 1.8;
-          gl_FragColor = vec4(lit, night * 0.92);
-        }
-      `,
-      transparent: true,
-      depthWrite:  false,
-    })
-    nightMesh = new THREE.Mesh(
-      new THREE.SphereGeometry(GLOBE_R * 1.001, 64, 64),
-      mat
-    )
-    nightMesh.renderOrder = 1
-    nightMesh.name = 'nightLights'
-    scene.add(nightMesh)
-  })
 
   // Drifting cloud sphere
   loader.load(T.clouds, tex => {
@@ -151,7 +108,6 @@ export function updateEarth() {
      Math.sin(phi) * Math.sin(theta),
   ).normalize()
 
-  if (nightMesh) nightMesh.material.uniforms.sunDir.value.copy(sunDir)
 
   // Slowly drift clouds (one full rotation every ~6 hours)
   if (cloudMesh) cloudMesh.rotation.y += 0.000072
@@ -159,5 +115,4 @@ export function updateEarth() {
 
 // Layer visibility toggles
 export function toggleClouds(v)      { if (cloudMesh)  cloudMesh.visible  = v }
-export function toggleNightLights(v) { if (nightMesh)  nightMesh.visible  = v }
 export function toggleAtmosphere(v)  { if (atmMesh)    atmMesh.visible    = v }
