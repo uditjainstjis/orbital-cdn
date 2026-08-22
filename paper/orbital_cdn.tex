@@ -1,0 +1,948 @@
+% =============================================================================
+%  Orbital CDN: A Physically-Grounded, Predictive Control Plane for
+%  Content Delivery over Low-Earth-Orbit Constellations
+%
+%  Compiles with a base TeX Live installation:
+%     pdflatex orbital_cdn.tex   (run twice for cross-references)
+%  No packages beyond the LaTeX base + geometry/booktabs/hyperref set.
+% =============================================================================
+
+\documentclass[10pt,twocolumn]{article}
+
+\usepackage[a4paper,margin=1.9cm,columnsep=0.7cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{caption}
+\usepackage{microtype}
+\usepackage[table]{xcolor}
+\usepackage{fancyhdr}
+\usepackage[colorlinks=true,linkcolor=linkblue,citecolor=linkblue,urlcolor=linkblue]{hyperref}
+
+\definecolor{linkblue}{RGB}{0,80,140}
+\definecolor{rulegrey}{RGB}{120,120,120}
+
+\captionsetup{font=small,labelfont=bf,skip=6pt}
+\setlength{\parskip}{0pt}
+\setlength{\abovedisplayskip}{6pt}
+\setlength{\belowdisplayskip}{6pt}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\footnotesize\itshape Orbital CDN: A Predictive Control Plane for LEO Content Delivery}
+\fancyhead[R]{\footnotesize\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% twocolumn defaults to \flushbottom, which forces each column to the page
+% bottom by stretching whatever glue it can find. With \parskip at 0pt the only
+% stretchable glue is around section headings, so a short column opens a large
+% hole beneath its heading. Ragged bottoms are correct here.
+\raggedbottom
+
+% --- notation shorthands -----------------------------------------------------
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Ind}[1]{\mathbf{1}\!\left[#1\right]}
+\newcommand{\ms}{\,\mathrm{ms}}
+\newcommand{\km}{\,\mathrm{km}}
+\newcommand{\dB}{\,\mathrm{dB}}
+\newcommand{\GHz}{\,\mathrm{GHz}}
+\newcommand{\mmh}{\,\mathrm{mm/h}}
+\newcommand{\Gset}{\mathcal{G}}
+\newcommand{\Dset}{\mathcal{D}}
+\newcommand{\Cset}{\mathcal{C}}
+\newcommand{\Sset}{\mathcal{S}}
+
+\begin{document}
+
+% =============================================================================
+\twocolumn[
+\begin{@twocolumnfalse}
+\begin{center}
+{\LARGE\bfseries Orbital CDN: A Physically-Grounded, Predictive\\[2pt]
+Control Plane for Content Delivery over LEO Constellations\par}
+\vspace{10pt}
+{\large Udit Jain\par}
+\vspace{4pt}
+{\small\ttfamily orbital-cdn.vercel.app \quad$\cdot$\quad github.com/uditjainstjis/orbital-cdn\par}
+\vspace{14pt}
+\begin{minipage}{0.86\textwidth}
+\small
+\noindent\textbf{Abstract}---%
+Low-Earth-orbit (LEO) constellations are frequently proposed as a substrate for
+content delivery on the grounds that the vacuum speed of light exceeds the group
+velocity in silica by roughly $47\%$. This argument is necessary but not
+sufficient: the ascent and descent legs impose a fixed geometric overhead, so an
+orbital path is advantageous only beyond a crossover separation. We present a
+routing and control plane that (i) computes end-to-end latency from the actual
+geometry of the selected path rather than from a distance surrogate, (ii)
+evaluates rain-induced link degradation using a faithful implementation of the
+ITU-R P.838-3/P.839-4/P.618-13 recommendation chain, validated against all $28$
+published reference coefficients, (iii) expresses every competing routing
+objective in a single \emph{latency-equivalent} currency so that policy weights
+trade commensurate quantities, and (iv) closes an observe--predict--plan--act--
+verify loop in which a gradient-boosted forecaster, trained on four months of
+NASA POWER reanalysis precipitation for eight real teleport sites, prices the
+probability of imminent link outage into the routing cost.
+Under a paired four-arm evaluation over $5{,}600$ requests and $2{,}800$ hours of
+recorded weather, request failures fall from $80$ (weather-blind) to $2$
+(instantaneous observation) to $0$ (forecast-aware). We report two negative
+results that qualify the contribution: the dominant share of the benefit accrues
+from \emph{observation} rather than \emph{prediction}, and our hysteretic agent
+attains no failure reduction over stateless predictive routing while incurring
+$+5.3\ms$ of mean latency. Independently, the simulator reproduces a published
+LEO-versus-fibre crossover distance of $4{,}472\km$ without having been
+calibrated against it.
+\vspace{6pt}
+
+\noindent\textbf{Keywords}---%
+LEO constellations, content delivery networks, multi-objective routing, ITU-R
+P.618, rain attenuation, probabilistic forecasting, calibration, autonomous
+network operations.
+\end{minipage}
+\end{center}
+\vspace{16pt}
+\end{@twocolumnfalse}
+]
+
+% =============================================================================
+\section{Introduction}
+
+The case for routing content through low-Earth orbit rests on a single physical
+asymmetry. Light propagates through vacuum at $c_{0}=299{,}792\km\mathrm{/s}$
+but through fused-silica fibre at $c_{f}=c_{0}/n\approx204{,}190\km\mathrm{/s}$
+for a refractive index $n\approx1.468$, a speed advantage of approximately
+$47\%$. A path that ascends to a satellite, traverses a sequence of optical
+inter-satellite links (ISLs), and descends to a ground station may therefore
+deliver a lower round-trip time (RTT) than a terrestrial path between the same
+endpoints.
+
+This argument is incomplete. The ascent and descent legs contribute a
+separation-independent overhead of order $2h/\sin\theta$ for shell altitude $h$
+and elevation angle $\theta$. Consequently the orbital path is advantageous only
+when the terrestrial separation is large enough to amortise that overhead. The
+engineering question is therefore not \emph{whether} orbit is faster, but
+\emph{where the crossover lies} and \emph{what else is sacrificed} in reaching
+it---because a LEO content plane is subject to three constraints with no
+terrestrial analogue: orbital eclipse, which removes solar power from a
+compute-bearing satellite; transit of the South Atlantic Anomaly (SAA), where the
+inner Van Allen belt descends to approximately $200\km$; and rain fade at the
+ground segment, which above $10\GHz$ can exceed any economically closable link
+margin.
+
+\subsection{Contributions}
+
+\begin{enumerate}
+\item \textbf{A standards-faithful attenuation model.} We implement the ITU-R
+recommendation chain exactly and validate the implementation against all $28$
+published reference coefficients spanning $1$--$30\GHz$
+(Section~\ref{sec:physics}). Rain fade given a rain rate is an analytic problem;
+we treat it as such rather than approximating it with a learned surrogate.
+
+\item \textbf{A commensurable cost functional.} All routing terms---propagation,
+eclipse, radiation, rain fade, learned penalties and predicted outage---are
+expressed in latency-equivalent milliseconds, eliminating a class of unit
+pathology we encountered and document in Section~\ref{sec:cost}.
+
+\item \textbf{A calibration-first predictive layer.} We show that a persistence
+baseline is a strong \emph{discriminator} of imminent fade but a poor
+\emph{probability estimator}, and that the learned model's contribution is
+almost entirely calibration---the property a cost-weighted router requires
+(Section~\ref{sec:predict}).
+
+\item \textbf{A paired evaluation that decomposes the benefit.} By separating an
+arm that observes current conditions from one that forecasts, we attribute
+$97.5\%$ of the achievable failure reduction to observation and the remainder to
+prediction (Section~\ref{sec:results}).
+
+\item \textbf{Reported negative results.} Our hysteretic agent does not improve
+on stateless predictive routing in this regime, and we state the conditions
+under which it would (Section~\ref{sec:discussion}).
+\end{enumerate}
+
+% =============================================================================
+\section{Related Work}
+
+Handley~\cite{handley2018} established that a LEO relay network can undercut
+terrestrial fibre on long-haul paths, reporting an advantage beyond roughly
+$3{,}000\km$ for a $1{,}150\km$ shell. Chaudhry and
+Yanikomeroglu~\cite{chaudhry2022} formalise the crossover distance as a function
+of shell altitude and fibre refractive index, obtaining $4{,}472\km$ at
+$h=550\km$, $n=1.4675$; critically, their terrestrial model assumes great-circle
+routing without path inflation, so realised crossovers should be shorter. We use
+their figure as an external check rather than a fitted parameter.
+
+Rain attenuation on Earth--space paths is standardised in ITU-R
+P.618~\cite{itu618}, with specific attenuation coefficients in
+P.838~\cite{itu838} and rain height in P.839~\cite{itu839}. These are the models
+used in operational link design; we adopt them unmodified.
+
+Orbital propagation follows the SGP4 analytic theory~\cite{vallado2006} applied
+to two-line element sets. Pfandzelter and Bermbach~\cite{pfandzelter2023}
+characterise the reliability envelope of in-orbit edge computation, including
+single-event-upset rates under SAA transit, and provide the shell parameters we
+scale from.
+
+% =============================================================================
+\section{System Model and Notation}
+\label{sec:model}
+
+Let $\Sset$ denote the satellite set, $|\Sset|=180$, arranged as a Walker-Delta
+constellation of $9$ planes $\times\,20$ satellites at inclination $53^{\circ}$
+and altitude $h_{s}=550\km$. This is a $1/8$-scale reduction of the authorised
+Starlink Gen1 shell~1 ($1{,}584$ satellites, $72\times22$, identical altitude and
+inclination), adopted for real-time rendering tractability. A subset
+$\Dset\subset\Sset$, $|\Dset|=4$, carries compute at $h_{d}=640\km$. The ground
+segment comprises gateways $\Gset$, $|\Gset|=8$, located at published teleport
+coordinates, and origin cities $\Cset$, $|\Cset|=8$.
+
+Satellite states are obtained by SGP4 propagation of two-line elements retrieved
+from CelesTrak, converted from the ECI frame to geodetic coordinates through
+Greenwich Mean Sidereal Time. When the catalogue is unavailable the system falls
+back to a closed-form Walker-Delta model,
+\begin{align}
+\phi(t) &= \arcsin\!\big(\sin i\,\sin\nu(t)\big), \\
+\lambda(t) &= \Omega(t) + \operatorname{atan2}\!\big(\cos i\,\sin\nu(t),\,\cos\nu(t)\big),
+\end{align}
+with inclination $i$, true anomaly $\nu$ advancing at the orbital rate, and right
+ascension of the ascending node $\Omega$ advancing at the Earth-rotation rate.
+
+Table~\ref{tab:notation} collects the principal symbols.
+
+\begin{table}[t]
+\centering
+\caption{Principal notation.}
+\label{tab:notation}
+\small
+\begin{tabularx}{\columnwidth}{@{}lX@{}}
+\toprule
+Symbol & Meaning \\
+\midrule
+$g(\cdot,\cdot)$ & great-circle distance (km) \\
+$\tau(\cdot,\cdot)$ & round-trip propagation time (ms) \\
+$\theta$ & path elevation angle (deg) \\
+$\gamma_{R}$ & specific rain attenuation (dB/km) \\
+$A_{p}$ & attenuation exceeded for $p\%$ of a year (dB) \\
+$M$ & rain-fade link margin (dB) \\
+$\Pi$ & instantaneous outage probability \\
+$w=(w_{\ell},w_{s},w_{r},w_{x})$ & policy weights \\
+$\rho$ & learned penalty in $[0,1]$ \\
+$\kappa$ & forecast confidence in $[0,1]$ \\
+$\Phi$ & failure cost, latency-equivalent (ms) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% =============================================================================
+\section{Link Physics}
+\label{sec:physics}
+
+\subsection{Specific attenuation (ITU-R P.838-3)}
+
+The specific attenuation obeys the power law
+\begin{equation}
+\gamma_{R} = k\,R^{\alpha} \qquad [\mathrm{dB/km}],
+\label{eq:powerlaw}
+\end{equation}
+for rain rate $R$ in $\mmh$. The polarisation-resolved coefficients are fitted as
+sums of Gaussians in $\log_{10}f$ with $f$ in GHz. For $k$,
+\begin{equation}
+\begin{split}
+\log_{10}k_{\pi} = \sum_{j=1}^{4} a_{j}
+\exp\!\left[-\left(\frac{\log_{10}f-b_{j}}{c_{j}}\right)^{\!2}\right] \\
+{}+ m_{k}\log_{10}f + c_{k},
+\end{split}
+\label{eq:kfit}
+\end{equation}
+and for $\alpha$, with five terms and \emph{without} the outer exponentiation,
+\begin{equation}
+\begin{split}
+\alpha_{\pi} = \sum_{j=1}^{5} a_{j}
+\exp\!\left[-\left(\frac{\log_{10}f-b_{j}}{c_{j}}\right)^{\!2}\right] \\
+{}+ m_{\alpha}\log_{10}f + c_{\alpha},
+\end{split}
+\label{eq:afit}
+\end{equation}
+where $\pi\in\{H,V\}$ indexes polarisation. The asymmetry between
+\eqref{eq:kfit} and \eqref{eq:afit}---$k$ is fitted in logarithmic space and
+must be exponentiated, $\alpha$ is not---is a common source of silent
+implementation error, since a transposed convention still yields
+plausible-magnitude output.
+
+For arbitrary path geometry and polarisation tilt $\tau$ ($45^{\circ}$ for
+circular polarisation),
+\begin{align}
+k &= \tfrac{1}{2}\big[k_{H}+k_{V}+(k_{H}-k_{V})\cos^{2}\theta\cos 2\tau\big],
+\label{eq:kcomb}\\
+\alpha &= \frac{k_{H}\alpha_{H}+k_{V}\alpha_{V}
++(k_{H}\alpha_{H}-k_{V}\alpha_{V})\cos^{2}\theta\cos 2\tau}{2k}.
+\label{eq:acomb}
+\end{align}
+
+\paragraph{Validation.} Equations \eqref{eq:kfit}--\eqref{eq:acomb} are evaluated
+against the reference table published in the recommendation itself. All $28$
+coefficients across $\{1,12,19,20,25,28,30\}\GHz$ reproduce to within $2\%$
+(Table~\ref{tab:itu}); the check executes as a unit test, so a transcription
+error cannot pass unnoticed.
+
+\begin{table}[t]
+\centering
+\caption{Validation of the P.838-3 implementation against the published
+reference table. All 28 checks pass within 2\%.}
+\label{tab:itu}
+\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+$f$ (GHz) & $k_{H}$ & $\alpha_{H}$ & $k_{V}$ & $\alpha_{V}$ \\
+\midrule
+1  & 0.0000259 & 0.9691 & 0.0000308 & 0.8592 \\
+12 & 0.02386   & 1.1825 & 0.02455   & 1.1216 \\
+19 & 0.08084   & 1.0691 & 0.08642   & 0.9930 \\
+20 & 0.09164   & 1.0568 & 0.09611   & 0.9847 \\
+25 & 0.1571    & 0.9991 & 0.1533    & 0.9491 \\
+28 & 0.2051    & 0.9679 & 0.1964    & 0.9277 \\
+30 & 0.2403    & 0.9485 & 0.2291    & 0.9129 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The four-order-of-magnitude spread in $k$ between $1\GHz$ and $20\GHz$ is not
+merely a validation artefact: it is the quantitative reason that hydrometeor
+attenuation is negligible at UHF and dominant at Ka-band, and it disqualifies
+UHF-band packet corpora as training data for Ka-band fade prediction. We return
+to this in Section~\ref{sec:threats}.
+
+\subsection{Rain height and slant geometry}
+
+Rain height follows P.839-4 as $h_{R}=h_{0}+0.36\km$, where $h_{0}$ is the mean
+annual $0^{\circ}$C isotherm height. We use the latitude parameterisation
+$h_{0}=5.0-0.075(|\phi|-23)$ km for $|\phi|\ge 23^{\circ}$ and $5.0$ km
+otherwise, in place of the gridded map, and flag this as an approximation.
+
+The P.618-13 slant-path procedure then proceeds as follows. For
+$\theta\ge5^{\circ}$ the path length below the rain height is
+\begin{equation}
+L_{s}=\frac{h_{R}-h_{g}}{\sin\theta},\qquad L_{G}=L_{s}\cos\theta,
+\end{equation}
+with $h_{g}$ the station elevation. The horizontal reduction factor accounts for
+the finite spatial extent of a rain cell,
+\begin{equation}
+r_{0.01}=\left[1+0.78\sqrt{\frac{L_{G}\gamma_{R}}{f}}
+-0.38\left(1-e^{-2L_{G}}\right)\right]^{-1},
+\label{eq:hred}
+\end{equation}
+and the vertical adjustment factor, with
+$\zeta=\arctan\!\big[(h_{R}-h_{g})/(L_{G}r_{0.01})\big]$ and
+$\chi=\max(0,\,36-|\phi|)$,
+\begin{equation}
+\begin{split}
+\nu_{0.01}=\Bigg[1+\sqrt{\sin\theta}\;\times \\
+\Bigg(31\big(1-e^{-\theta/(1+\chi)}\big)
+\frac{\sqrt{L_{R}\gamma_{R}}}{f^{2}}-0.45\Bigg)\Bigg]^{-1}.
+\end{split}
+\end{equation}
+The effective path length is $L_{E}=L_{R}\nu_{0.01}$ and the attenuation
+exceeded for $0.01\%$ of an average year is
+\begin{equation}
+A_{0.01}=\gamma_{R}L_{E}.
+\end{equation}
+Extrapolation to other exceedance percentages $p\in[0.001,5]\%$ uses
+\begin{equation}
+A_{p}=A_{0.01}\left(\frac{p}{0.01}\right)^{-\beta},
+\end{equation}
+\begin{equation}
+\beta = 0.655+0.033\ln p-0.045\ln A_{0.01}-\varsigma(1-p)\sin\theta,
+\end{equation}
+with $\varsigma$ vanishing for $p\ge1\%$ or $|\phi|\ge36^{\circ}$.
+
+\subsection{Instantaneous fade and outage}
+
+For an observed rain rate the same specific attenuation and horizontal reduction
+are applied to the current rate rather than the annual statistic, yielding an
+instantaneous fade $A(t)$. We note explicitly that \eqref{eq:powerlaw} is valid
+pointwise for any $R$, whereas the P.618 \emph{statistics} presuppose a one
+minute integration time; our observations are hourly reanalysis means, which
+attenuate peak rates. The resulting fade estimate is therefore
+\emph{conservative}, biased against the orbital system rather than for it.
+
+Rather than thresholding fade against margin, we map the residual margin through
+a logistic link,
+\begin{equation}
+\Pi(t)=\sigma\!\left(\frac{A(t)-M}{s}\right)
+=\left[1+\exp\!\left(\frac{M-A(t)}{s}\right)\right]^{-1},
+\label{eq:outage}
+\end{equation}
+with $M=6\dB$ and softness $s=1\dB$. The smooth transition encodes estimator
+uncertainty: a hard threshold would assert a precision the hourly-mean input
+does not support.
+
+% =============================================================================
+\section{Path Geometry and Latency}
+
+Great-circle separation uses the haversine form
+\begin{equation}
+g(a,b)=2R_{\oplus}\arcsin\!\sqrt{\sin^{2}\tfrac{\Delta\phi}{2}
++\cos\phi_{a}\cos\phi_{b}\sin^{2}\tfrac{\Delta\lambda}{2}}.
+\end{equation}
+Ground-to-satellite legs use the slant range
+$\sqrt{g^{2}+h^{2}}$; inter-satellite legs are measured as arcs at orbital
+radius, $g\,(R_{\oplus}+h)/R_{\oplus}$.
+
+The complete request path is
+\begin{equation}
+\underbrace{c \to u}_{\text{slant}} \;\to\;
+\underbrace{u \to \cdots \to d}_{\text{ISL arcs}} \;\to\;
+\underbrace{d \to u'}_{\text{ISL arc}} \;\to\;
+\underbrace{u' \to \eta}_{\text{slant}},
+\end{equation}
+for origin $c$, uplink satellite $u$, data centre $d\in\Dset$, a relay $u'$ in
+view of gateway $\eta\in\Gset$, terminating at the gateway. Two properties of
+this construction deserve emphasis. First, the descent is routed via a satellite
+\emph{actually in view of the gateway}; a direct $d\to\eta$ slant range would
+traverse the planetary interior whenever $d$ lies on the far side. Second, the
+chain already egresses and returns to the ground, so its length is the complete
+request--response path and must \emph{not} be doubled to obtain RTT. Both are
+errors we committed and corrected; the second inflated one origin's path by
+$45{,}000\km$.
+
+End-to-end latency is then
+\begin{equation}
+\mathrm{RTT}=\frac{\ell_{\mathrm{path}}}{c_{0}}\cdot10^{3}
++ T_{\mathrm{proc}} + T_{\mathrm{wx}},
+\end{equation}
+with compute term $T_{\mathrm{proc}}$ and rain-fade delay $T_{\mathrm{wx}}$.
+
+\subsection{Terrestrial baseline}
+
+The comparison baseline is \emph{measured}, not modelled: ICMP round-trip times
+between third-party vantage points, cross-checked against a public cloud
+provider's published $30$-day median backbone latencies
+(Table~\ref{tab:baseline}). These are datacentre-to-datacentre and therefore
+exclude consumer access latency, making the baseline conservative. A physical
+model,
+\begin{equation}
+\mathrm{RTT}_{f}=2\left(\frac{\varrho\, g}{c_{f}}\cdot10^{3}
++ \varsigma_{sw}\frac{\varrho\, g}{10^{3}} + T_{acc}\right)+T_{\mathrm{proc}},
+\end{equation}
+with route-inflation factor $\varrho=1.42$, switching cost
+$\varsigma_{sw}=1\ms$ per $1{,}000\km$ and access latency $T_{acc}=5\ms$, is
+retained as a fallback for origins outside the measurement set and is displayed
+alongside the measurement so that model error is visible rather than concealed.
+
+\begin{table}[t]
+\centering
+\caption{Measured terrestrial baselines against the physical model. Distances
+are to the nearest terrestrial cloud region.}
+\label{tab:baseline}
+\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Origin & $g$ (km) & Measured & Backbone & Model \\
+\midrule
+New York   &   325 & \textbf{7.5} &   8 &  15 \\
+London     &   637 & \textbf{14.4}&  17 &  21 \\
+Delhi      & 4{,}145 & \textbf{92.1}&  53 &  79 \\
+Dubai      & 4{,}836 & \textbf{122.2}& 100 &  91 \\
+Lagos      & 4{,}873 & \textbf{118.5}& --- &  92 \\
+Tokyo      & 5{,}322 & \textbf{66.4}&  72 &  99 \\
+Sydney     & 6{,}305 & \textbf{92.7}&  95 & 116 \\
+S\~{a}o Paulo & 7{,}626 & \textbf{113.1}& 118 & 138 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% =============================================================================
+\section{Multi-Objective Routing in a Commensurable Currency}
+\label{sec:cost}
+
+Data-centre and gateway selection minimise scalarised costs in which
+\emph{every} term carries units of latency-equivalent milliseconds:
+\begin{align}
+C_{\Dset}(c,d) =\;& w_{\ell}\,\tau(c,d)
++ w_{s}\,\kappa_{e}\,\Ind{\mathrm{ecl}(d)} \nonumber\\
+&+ w_{r}\,\kappa_{a}\,\Ind{\mathrm{saa}(d)}
++ w_{\ell}\,\kappa_{p}\,\varsigma\,\rho^{\ell}_{d} \nonumber\\
+&+ w_{r}\,\kappa_{p}\,\varsigma\,\rho^{r}_{d},
+\label{eq:dccost}\\[2pt]
+C_{\Gset}(c,\eta) =\;& w_{\ell}\,\tau(c,\eta)
++ w_{x}\,T_{\mathrm{wx}}(\eta) \nonumber\\
+&+ w_{x}\,\kappa_{p}\,\varsigma\,\rho^{x}_{\eta}
++ w_{x}\,J(\eta),
+\label{eq:gwcost}
+\end{align}
+with $\tau(a,b)=2g(a,b)/c_{0}\cdot10^{3}$, eclipse cost $\kappa_{e}=25\ms$,
+radiation cost $\kappa_{a}=40\ms$, adaptation scale $\kappa_{p}=30\ms$,
+adaptation gain $\varsigma=0.6$, and predictive term $J$ defined in
+\eqref{eq:predcost}. Selection is $\arg\min$ over each candidate set.
+
+\paragraph{Why commensurability is load-bearing.} An earlier formulation mixed a
+distance normalised to $[0,1]$ with indicator penalties of unit magnitude. Under
+a balanced weighting the eclipse indicator then dominated half a planetary
+circumference of detour, and the router dispatched requests to the antipodal
+hemisphere in pursuit of insolation. Stating the eclipse penalty as
+``$25\ms$ of detour at unit weight'' renders the trade explicit and auditable;
+it also makes the weights interpretable to an operator, which a normalised
+formulation does not.
+
+\paragraph{Emergent policy structure.} With four weight vectors the resulting
+operating points form a Pareto frontier that was not designed
+(Table~\ref{tab:policy}). Notably, the reliability-weighted policy attains
+\emph{exactly} zero rain exposure---an unspecified consequence of
+$w_{x}=0.90$---at a cost of $12\ms$ in median latency.
+
+\begin{table}[t]
+\centering
+\caption{Emergent operating points. Rain exposure is the fraction of served
+requests whose gateway was in precipitation.}
+\label{tab:policy}
+\small
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Policy & $w_{\ell}$ & $w_{s}/w_{r}/w_{x}$ & $p_{50}$ RTT & Rain exp. \\
+\midrule
+latency  & 0.95 & 0.05/0.05/0.05 & \textbf{61 ms} & 13.7\% \\
+balanced & 0.50 & 0.50/0.50/0.40 & 67 ms & 13.9\% \\
+reliable & 0.20 & 0.30/0.95/0.90 & 73 ms & \textbf{0.0\%} \\
+green    & 0.20 & 0.90/0.20/0.30 & 78 ms & 5.5\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% =============================================================================
+\section{Adaptation from Observed Telemetry}
+
+Every served request appends a record to an append-only log. Over a
+user-selected window $W$, aggregates induce penalties $\rho\in[0,1]$ that
+re-enter \eqref{eq:dccost}--\eqref{eq:gwcost}. For gateways,
+\begin{equation}
+\rho^{x}_{\eta}=\min\!\left(1,\;
+\frac{1}{|W_{\eta}|}\sum_{t\in W_{\eta}} T_{\mathrm{wx}}(\eta,t)\;/\;T^{\max}_{\mathrm{wx}}\right).
+\end{equation}
+For data centres we separate two signals that carry different policy
+coefficients: an observed tail-latency excess relative to the best performer,
+\begin{equation}
+\rho^{\ell}_{d}=\min\!\left(1,\;
+\frac{q_{95}(d)-\min_{d'}q_{95}(d')}{\min_{d'}q_{95}(d')}\right),
+\end{equation}
+and an observed SAA-transit fraction $\rho^{r}_{d}$.
+
+\paragraph{An information-theoretic exclusion.} We deliberately do \emph{not}
+learn a historical eclipse fraction. The cost function already reads
+$\Ind{\mathrm{ecl}(d)}$ instantaneously; a windowed average of the same
+deterministic quantity is strictly less informative than the indicator it would
+accompany, and charging both double-counts identical orbital geometry. The
+general principle we adopt is that a learned term is admissible only if it
+encodes information not available to the controller by direct observation. Under
+this criterion gateway weather qualifies---it is genuinely stochastic---whereas
+eclipse, being deterministic celestial mechanics, does not.
+
+\paragraph{Effect.} Toggling adaptation alters the selected route in $6$ of $32$
+origin--policy combinations; varying the analysis window alters it in $4/32$
+($7$d versus $30$d) and $5/32$ ($24$h versus $7$d).
+
+% =============================================================================
+\section{Predictive Layer}
+\label{sec:predict}
+
+\subsection{Problem statement}
+
+Let $A_{\eta}(t)$ denote fade at gateway $\eta$. We estimate
+\begin{equation}
+p_{h}(\eta,t)=\Pr\!\left[\max_{t<t'\le t+h} A_{\eta}(t') > A^{\ast}
+\;\middle|\; \mathcal{F}_{t}\right],
+\end{equation}
+for horizons $h\in\{1,3,6,12\}$ hours and threshold $A^{\ast}=3\dB$, where
+$\mathcal{F}_{t}$ is the filtration generated by observations up to $t$.
+
+\subsection{Data and leakage control}
+
+Precipitation is NASA POWER hourly reanalysis for the eight teleport
+coordinates, $2{,}928$ hours per site. We note a unit convention that is easy to
+mishandle: the hourly endpoint reports \texttt{PRECTOTCORR} in
+$\mathrm{mm/day}$ despite hourly sampling, requiring division by $24$; omitting
+this inflates every rate by $24\times$ and renders all downstream fade estimates
+meaningless.
+
+Twenty-one features are constructed, all measurable at or before $t$: lagged
+rates at $\{1,2,3,6,12\}$ hours, first differences over $1$ and $3$ hours,
+rolling means over $\{3,6,24\}$ hours, rolling maxima over $\{6,24\}$ hours, a
+$24$-hour wet fraction, instantaneous fade, hours since last wet, site
+climatology, absolute latitude, and diurnal and seasonal phase.
+
+Partitioning is \emph{temporal}, never random: consecutive hours are strongly
+dependent, and a random split leaks future information into training. Training
+uses hours $[0,1756)$, validation $[1756,2196)$, and test $[2196,2928)$. A
+second partition holds out entire \emph{sites} to assess transfer to a gateway
+never observed.
+
+\subsection{Results and the primacy of calibration}
+
+Table~\ref{tab:model} reports held-out performance against three baselines. The
+learned model is a gradient-boosted ensemble ($90$ estimators, $12$ leaves,
+depth $5$), exported to $71$ KB of JSON and evaluated client-side.
+
+\begin{table}[t]
+\centering
+\caption{Held-out forecast performance. Persistence dominates on ranking at long
+horizons; the learned model dominates on calibration at every horizon.}
+\label{tab:model}
+\small
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+& \multicolumn{2}{c}{Persistence} & \multicolumn{2}{c}{Gradient boosting} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+Horizon & AUC & Brier & AUC & Brier \\
+\midrule
+$+1$h  & 0.998 & 0.0294 & \textbf{0.999} & \textbf{0.0030} \\
+$+3$h  & 0.990 & 0.0290 & \textbf{0.991} & \textbf{0.0071} \\
+$+6$h  & \textbf{0.973} & 0.0307 & 0.949 & \textbf{0.0139} \\
+$+12$h & \textbf{0.944} & 0.0329 & 0.892 & \textbf{0.0271} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The pattern is unambiguous and, we argue, is the substantive finding of this
+section. Persistence is an excellent \emph{ordering} of imminent fade---it is
+difficult to beat on AUC, and at $6$ and $12$ hours we do not beat it---but it is
+a poor \emph{probability}. Brier score improves by factors of $2$ to $10$ at
+every horizon. Because the controller multiplies $p_{h}$ by a cost in
+\eqref{eq:predcost} rather than merely sorting by it, calibration and not
+discrimination is the operative property. A system that ranks perfectly but
+reports $0.9$ where the truth is $0.3$ will systematically over-purchase
+latency to avoid failures that were never likely.
+
+Held-out AUC on entirely unseen sites is $0.999$, $0.994$, $0.987$ and $0.958$
+across the four horizons, indicating that the learned structure is not merely
+site memorisation.
+
+\subsection{Predictive cost and confidence gating}
+
+The predicted-failure term entering \eqref{eq:gwcost} is
+\begin{equation}
+J(\eta)=\Phi\left[\Pi_{\eta}
++ \kappa(\eta)\,\bar{p}(\eta)\,\big(1-\Pi_{\eta}\big)\right],
+\label{eq:predcost}
+\end{equation}
+where $\bar{p}=\sum_{h}\omega_{h}p_{h}\big/\sum_{h}\omega_{h}$,
+$\Phi=900\ms$, and horizon weights
+$\omega=(1.0,0.55,0.25,0.10)$. Only the forecast is attenuated by confidence
+$\kappa$; the present observation $\Pi_{\eta}$ is certain and enters undamped.
+
+Confidence is reduced when the operating point departs from the training
+support---an out-of-distribution rate of $90\mmh$ at a site whose recorded
+maximum is $11\mmh$ yields $\kappa=0.45$, below the autonomy threshold
+$\kappa_{\min}=0.60$. Below that threshold the agent may recommend but not act.
+
+\paragraph{Degradation policy.} If the predictive subsystem raises, times out, or
+is disabled, $J\equiv0$ and the deterministic controller of
+Section~\ref{sec:cost} is recovered unchanged. Learned components are never a
+single point of failure for routing.
+
+% =============================================================================
+\section{The Operations Agent}
+\label{sec:agent}
+
+\subsection{Formalisation}
+
+The agent is a deterministic policy engine---explicitly not a learned
+controller---executing on a fixed cadence decoupled from rendering. At tick $t$
+it observes the network state, evaluates candidate routes, and emits an action
+from $\{\textsc{Hold},\textsc{Propose},\textsc{Reroute}\}$.
+
+Define the horizon-weighted forward risk
+$\bar{r}(\eta)=\sum_{h}\omega_{h}p_{h}(\eta)\big/\sum_{h}\omega_{h}$, and let
+$\eta_{t}$ be the incumbent gateway and
+$\eta^{\star}=\arg\min_{\eta}C_{\Gset}(c,\eta)$. The agent reroutes iff the
+conjunction
+\begin{equation}
+\Theta_{t} \;\wedge\;
+\Lambda_{t} \;\wedge\;
+\Xi_{t} \;\wedge\;
+\Delta C_{t}\ge\delta \;\wedge\;
+\Delta r_{t}\ge\epsilon \;\wedge\;
+\kappa\ge\kappa_{\min}
+\label{eq:gate}
+\end{equation}
+holds, where
+\begin{align}
+\Theta_{t} &: \;\bar{r}(\eta_{t})\ge r_{\mathrm{trig}} \;\vee\; \Pi_{\eta_{t}}\ge\Pi_{\mathrm{trig}}
+&&\text{(trigger)}, \nonumber\\
+\Lambda_{t} &: \; t-t_{\mathrm{route}} \ge \Lambda_{\min}
+&&\text{(dwell)}, \nonumber\\
+\Xi_{t} &: \; t-t_{\mathrm{act}} \ge \Xi_{\min}
+&&\text{(cooldown)}, \nonumber\\
+\Delta C_{t} &= C_{\Gset}(c,\eta_{t})-C_{\Gset}(c,\eta^{\star})-\varpi
+&&\text{(net gain)}, \nonumber\\
+\Delta r_{t} &= \bar{r}(\eta_{t})-\bar{r}(\eta^{\star})
+&&\text{(risk drop)}. \nonumber
+\end{align}
+Here $\varpi$ is an explicit switching cost. Operationally
+$r_{\mathrm{trig}}=0.45$, $\Pi_{\mathrm{trig}}=0.30$,
+$\Lambda_{\min}=20\,$s, $\Xi_{\min}=15\,$s, $\delta=25\ms$, $\epsilon=0.15$,
+$\varpi=12\ms$.
+
+\paragraph{Stability.} The dwell and cooldown predicates render the switching
+sequence non-Zeno by construction: consecutive actions are separated by at least
+$\min(\Lambda_{\min},\Xi_{\min})$, bounding the switching rate independently of
+forecast volatility. The margin conditions $\delta,\epsilon$ impose hysteresis,
+so a marginal cost inversion cannot induce oscillation between two gateways of
+near-equal cost---the failure mode that makes a naive greedy controller worse
+than no controller at all.
+
+\subsection{Authority and verification}
+
+Three authority levels are exposed: \textsc{Off} (advisory suppressed),
+\textsc{Assist} (propose and await human confirmation), and \textsc{Autopilot}
+(act). The default is \textsc{Assist}. This is a deliberate design position
+rather than an implementation limitation: no operational satellite programme
+presently delegates unsupervised manoeuvre or reconfiguration authority to a
+predictive model, and a system claiming otherwise would be dismissed by any
+reviewer with domain experience.
+
+Every action is subsequently scored against realised conditions. For a decision
+taken at $t$ with stated risk $p$, the realised outcome
+$y=\Ind{\max_{t<t'\le t+h}A(t')>A^{\ast}}$ is recorded and the Brier score
+$\mathcal{B}=\frac{1}{N}\sum(p_i-y_i)^{2}$ and reliability diagram are
+maintained. A forecast that is never scored is an assertion, not a prediction.
+
+% =============================================================================
+\section{Experimental Methodology}
+\label{sec:method}
+
+We evaluate under a \emph{paired} design: all arms are exposed to an identical
+request schedule against an identical weather realisation, replayed from a
+common epoch. Without pairing, inter-arm variance would be dominated by which
+arm happened to execute during a storm.
+
+Arms are distinguished solely by their observational endowment:
+\begin{itemize}
+\item[\textbf{A}] \textsc{Blind} --- static weather label only; the
+pre-predictive controller.
+\item[\textbf{R}] \textsc{Reactive} --- observes instantaneous fade; no forecast.
+\item[\textbf{B}] \textsc{Predictive} --- observes fade and forecast.
+\item[\textbf{C}] \textsc{Autopilot} --- as B, plus a per-origin standing route
+maintained by the agent of Section~\ref{sec:agent}.
+\end{itemize}
+
+Isolating \textbf{R} from \textbf{B} is the methodological crux: it separates the
+value of \emph{observing} from the value of \emph{forecasting}, a decomposition
+that a three-arm design conflates and that determines whether a predictive
+subsystem is justified at all.
+
+Outcome is adjudicated by physics identically in every arm: a request fails iff
+$A_{\eta}(t)>M$. The schedule comprises $5{,}600$ requests over $2{,}800$
+recorded hours, with origins and policies drawn from a fixed pseudorandom
+sequence.
+
+% =============================================================================
+\section{Results}
+\label{sec:results}
+
+\begin{table}[t]
+\centering
+\caption{Paired four-arm evaluation. $5{,}600$ requests, $2{,}800$ hours of
+recorded weather, identical schedule and realisation in every arm.}
+\label{tab:arms}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Arm & Failures & Rate & Mean (ms) & $p_{95}$ (ms) \\
+\midrule
+A \textsc{Blind}      & 80 & 1.43\% & 4.0 & 12.7 \\
+R \textsc{Reactive}   &  2 & 0.04\% & \textbf{3.7} & \textbf{10.0} \\
+B \textsc{Predictive} & \textbf{0} & \textbf{0.00\%} & 3.9 & 11.6 \\
+C \textsc{Autopilot}  & \textbf{0} & \textbf{0.00\%} & 9.2 & 31.9 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:arms} decomposes the benefit. Of $80$ baseline failures,
+$78$ ($97.5\%$) are eliminated by instantaneous observation alone; forecasting
+eliminates the residual $2$ at a cost of $+0.2\ms$ in mean latency. The agent
+attains no further failure reduction and incurs $+5.3\ms$ relative to arm B,
+executing $9$ reroutes of which $7$ ($78\%$) preceded actual degradation of the
+abandoned gateway.
+
+\paragraph{External validation.} Using measured baselines, the system loses at
+London ($637\km$, $0\%$) and New York ($325\km$, $0\%$) and wins from Delhi
+($4{,}145\km$, $\approx90\%$) outward, placing its empirical crossover in the
+same region as the $4{,}472\km$ reported by~\cite{chaudhry2022} for an identical
+shell altitude. No parameter was fitted to that figure. Given that
+\cite{chaudhry2022} models terrestrial paths without route inflation whereas our
+baseline is measured and therefore inflated, a realised crossover at or slightly
+below their value is the theoretically expected outcome.
+
+\paragraph{Environmental bound.} A caveat constrains the achievable effect size:
+across the four-month record only one of eight gateways experiences fade
+exceeding the $6\dB$ margin, in $19\%$ of its hours (maximum $19.9\dB$); three
+others do so in under $0.6\%$ of hours and four never. The measurable benefit of
+any weather-aware routing is bounded above by this exposure.
+
+% =============================================================================
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{Observation dominates prediction}
+
+The decomposition in Table~\ref{tab:arms} does not support a strong claim for
+forecasting in this regime. Reporting only arms A and B would have licensed the
+statement ``predictive routing eliminated $100\%$ of failures''---literally true
+and materially misleading, since a substantially simpler reactive controller
+captures $97.5\%$ of that benefit.
+
+We attribute this to the temporal structure of the hazard. Rain cells at these
+sites persist over multiple hours, so the instantaneous state is already highly
+informative about the near future; this is the same property that makes
+persistence such a strong AUC baseline in Table~\ref{tab:model}. Forecasting
+should be expected to contribute materially only where the hazard has short
+autocorrelation relative to the actuation latency, or where actuation itself is
+slow enough that acting on the present is already too late.
+
+\subsection{When hysteresis is worth its cost}
+
+Arm C is dominated by arm B. The explanation is structural rather than
+parametric: in this simulator, re-selecting a gateway per request is costless,
+so a standing route with dwell and hysteresis constraints can only retain a
+suboptimal assignment between switching opportunities. The agent's machinery
+prices a switching cost $\varpi$ that the environment does not actually charge.
+
+This identifies the condition under which the agent becomes justified rather
+than merely defensible: environments in which route changes carry genuine
+cost---session affinity, cache warmth, key re-establishment, signalling
+load---so that $\varpi>0$ in reality and not only in the controller's model. We
+regard the present result as correctly characterising the agent's value as
+\emph{zero in this regime}, and we report it rather than tuning the environment
+until the agent appears necessary.
+
+\subsection{On the admissibility of learned components}
+
+Two decisions in this work were resolved by the same criterion: a learned
+component is admissible only where it supplies information unavailable by direct
+observation or by an accepted analytic model. Rain fade given a rain rate is
+analytic and standardised, so it is computed, not learned. Historical eclipse
+fraction is deterministic and already observed, so it is excluded from the
+adaptation vector. Future precipitation is genuinely stochastic, so it is
+learned. We suggest this criterion generalises: systems that learn quantities
+they could compute or observe acquire the appearance of intelligence and the
+substance of noise.
+
+% =============================================================================
+\section{Threats to Validity}
+\label{sec:threats}
+
+\paragraph{Synthetic demand.} Request traffic is simulated and labelled as such
+in the interface. Weather, physics and the comparison baselines are not.
+Generalisation of the routing decisions to a real demand distribution is
+untested.
+
+\paragraph{Reanalysis smoothing.} Hourly means attenuate the sub-hourly peaks
+that dominate Ka-band outage. Absolute fade magnitudes are therefore
+under-estimated; the direction of the bias opposes our claims.
+
+\paragraph{Scale reduction.} The constellation is $1/8$ of the shell it models.
+Inter-satellite link range limits---operationally of order $5{,}400\km$---are not
+enforced, which at reduced density permits hops a real system could not close.
+
+\paragraph{Geometric idealisation.} The SAA is approximated by a rectangle over a
+region that is elliptical, bifurcating, and drifting westward at approximately
+$0.3^{\circ}$/yr. Rain height uses a latitude parameterisation rather than the
+gridded isotherm map.
+
+\paragraph{Domain transfer.} We evaluated and rejected a proposal to train the
+fade forecaster on a public corpus of UHF ($\approx437$ MHz) satellite packet
+receptions. By Table~\ref{tab:itu}, $k$ differs by nearly four orders of
+magnitude between that band and Ka; the corpus cannot contain the hydrometeor
+signal the model would be required to learn. We record this as a methodological
+caution: dataset availability is not evidence of dataset relevance, and the
+governing physics should be consulted before a corpus is adopted.
+
+% =============================================================================
+\section{Reproducibility}
+
+The physics implementation is validated by an executable test reproducing all
+$28$ published coefficients (\texttt{npm run test:itu}). Weather ingestion and
+model training are scripted end-to-end
+(\texttt{npm run data:weather}, \texttt{npm run train:fade}), with the trained
+ensemble exported as inspectable JSON. Held-out metrics, the temporal split
+boundaries, feature schema and data provenance are emitted as a machine-readable
+artefact alongside the model. The evaluation of Section~\ref{sec:results} is
+deterministic under a fixed seed and executes in-browser.
+
+% =============================================================================
+\section{Conclusion}
+
+We have described a control plane for LEO content delivery in which the physics
+is a faithful standards implementation rather than an approximation, the
+comparison baseline is externally measured rather than self-generated, and every
+routing objective is expressed in a single commensurable unit. The system
+reproduces an independently published crossover distance without having been
+fitted to it.
+
+Its principal empirical finding is deflationary and, we believe, more useful for
+that: in a regime where the hazard is strongly autocorrelated, most of the
+attainable reliability benefit is obtained by \emph{observing} current
+conditions, and a predictive subsystem contributes at the margin. The learned
+component's value lies in calibration rather than discrimination, and the
+hysteretic agent's value in this environment is nil. Establishing the conditions
+under which each becomes load-bearing---short hazard autocorrelation for the
+forecaster, non-zero switching cost for the agent---is the natural continuation
+of this work.
+
+The broader claim we wish to make is not that orbital delivery is faster. It is
+that the boundary can be located, that locating it requires physics and
+measurement rather than assertion, and that a system which reports where it
+fails is more useful than one which reports only where it succeeds.
+
+% =============================================================================
+\begin{thebibliography}{9}
+\small
+
+\bibitem{handley2018}
+M.~Handley,
+``Delay is not an option: Low latency routing in space,''
+in \emph{Proc. ACM HotNets}, 2018, pp.~85--91.
+
+\bibitem{chaudhry2022}
+A.~U.~Chaudhry and H.~Yanikomeroglu,
+``When to crossover from Earth to space for lower latency data communications?,''
+\emph{arXiv:2203.00154}, 2022.
+
+\bibitem{itu618}
+ITU-R,
+``Propagation data and prediction methods required for the design of
+Earth-space telecommunication systems,''
+\emph{Recommendation ITU-R P.618-13}, Geneva, 2017.
+
+\bibitem{itu838}
+ITU-R,
+``Specific attenuation model for rain for use in prediction methods,''
+\emph{Recommendation ITU-R P.838-3}, Geneva, 2005.
+
+\bibitem{itu839}
+ITU-R,
+``Rain height model for prediction methods,''
+\emph{Recommendation ITU-R P.839-4}, Geneva, 2013.
+
+\bibitem{vallado2006}
+D.~A.~Vallado, P.~Crawford, R.~Hujsak, and T.~S.~Kelso,
+``Revisiting spacetrack report \#3,''
+in \emph{Proc. AIAA/AAS Astrodynamics Specialist Conf.}, 2006.
+
+\bibitem{pfandzelter2023}
+T.~Pfandzelter and D.~Bermbach,
+``Edge computing in low-earth orbit --- what could possibly go wrong?,''
+in \emph{Proc. ACM LEO-NET}, 2023.
+
+\bibitem{power}
+NASA Langley Research Center,
+``POWER: Prediction of Worldwide Energy Resources, hourly API,''
+\url{https://power.larc.nasa.gov}, accessed 2026.
+
+\bibitem{fcc2021}
+Federal Communications Commission,
+``Order and Authorization, IBFS File No. SAT-MOD-20200417-00037,''
+FCC 21-48, Apr.~2021.
+
+\end{thebibliography}
+
+\end{document}
