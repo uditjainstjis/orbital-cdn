@@ -1731,6 +1731,22 @@ code, kbd, .mono { font-variant-numeric: tabular-nums; }
   color: var(--cyan); font-size: 13px; letter-spacing: 0.04em;
 }
 #topbar .logo b { font-weight: 700; color: var(--text); letter-spacing: 0.06em; }
+
+/* The brand mark is a glossy chrome-and-blue badge; the rest of this interface
+   is flat warm graphite. At 22px the gloss reads as texture rather than as a
+   competing style, which is the size at which the two can coexist. Larger than
+   this and it fights the palette — so it appears at full size only in the
+   first-run card, where being a brand mark is the whole point. */
+.logo-mark {
+  width: 22px; height: 22px; object-fit: contain;
+  display: block; flex: 0 0 auto;
+}
+
+/* The one place the full badge is allowed to be itself. */
+.intro-mark {
+  width: 52px; height: 52px; object-fit: contain;
+  display: block; margin-bottom: 14px;
+}
 #topbar .logo span {
   color: var(--muted); font-weight: 400; font-size: 9.5px; letter-spacing: 0.08em;
   text-transform: uppercase; padding-left: 9px; border-left: 1px solid var(--border);

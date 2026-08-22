@@ -1,3 +1,5 @@
+<img src="public/logo-full.png" alt="Orbital CDN" width="200" align="right" />
+
 # Orbital CDN
 
 **A routing and control plane for a content-delivery network whose edge nodes are in low Earth orbit.**
