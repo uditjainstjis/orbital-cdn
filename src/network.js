@@ -6,15 +6,31 @@
 // below, so a gateway's state genuinely changes over time. This matters: if
 // weather were a frozen literal, the "learned" rain penalty would converge to
 // a constant and the adaptive loop would be an obfuscated hardcoded weight.
+// Real teleport / gateway sites, not city-centre pins. Satellite ground
+// stations are sited well outside the cities they serve — using the city
+// centre misplaces the downlink by tens to hundreds of km, which matters when
+// the whole model turns on path geometry.
+//
+// Sources per site are noted inline. Mumbai has no published coordinate
+// (Starlink has nine proposed Indian gateways, none with public lat/lon), so
+// it remains a city-centre approximation and is labelled as such.
 export const GATEWAYS = [
-  { name: 'Singapore',   lat:   1.3, lon: 103.8, wetness: 0.42, weather: 'clear' },
-  { name: 'Mumbai',      lat:  19.1, lon:  72.9, wetness: 0.55, weather: 'clear' },
-  { name: 'Frankfurt',   lat:  50.1, lon:   8.7, wetness: 0.28, weather: 'clear' },
-  { name: 'Virginia',    lat:  38.9, lon: -77.0, wetness: 0.24, weather: 'clear' },
-  { name: 'Tokyo GW',    lat:  35.7, lon: 139.6, wetness: 0.30, weather: 'clear' },
-  { name: 'Sao Paulo GW',lat: -23.5, lon: -46.6, wetness: 0.38, weather: 'clear' },
-  { name: 'Sydney GW',   lat: -33.9, lon: 151.2, wetness: 0.22, weather: 'clear' },
-  { name: 'Lagos GW',    lat:   6.5, lon:   3.4, wetness: 0.46, weather: 'clear' },
+  // Seletar Teleport, Singtel — en.wikipedia.org/wiki/Seletar_Teleport
+  { name: 'Singapore',    lat:   1.3972, lon: 103.8343, wetness: 0.42, weather: 'clear', site: 'Seletar Teleport (Singtel)' },
+  // No published coordinate — city-centre approximation
+  { name: 'Mumbai',       lat:  19.1,    lon:  72.9,    wetness: 0.55, weather: 'clear', site: 'approximate — no published site' },
+  // Usingen teleport, ~45 km NW of Frankfurt — dishycentral.com Starlink dataset
+  { name: 'Frankfurt',    lat:  50.3363, lon:   8.5372, wetness: 0.28, weather: 'clear', site: 'Usingen' },
+  // Boydton VA — dishycentral.com Starlink dataset
+  { name: 'Virginia',     lat:  36.6676, lon: -78.3904, wetness: 0.24, weather: 'clear', site: 'Boydton, VA' },
+  // Hitachinaka, ~110 km NE of Tokyo — dishycentral.com Starlink dataset
+  { name: 'Tokyo GW',     lat:  36.3967, lon: 140.5333, wetness: 0.30, weather: 'clear', site: 'Hitachinaka' },
+  // Santana de Parnaiba, ~35 km NW of Sao Paulo — dishycentral.com dataset
+  { name: 'Sao Paulo GW', lat: -23.4439, lon: -46.9178, wetness: 0.38, weather: 'clear', site: 'Santana de Parnaiba' },
+  // Optus Satellite Station, Belrose NSW — oztowers.com.au site register
+  { name: 'Sydney GW',    lat: -33.7173, lon: 151.2115, wetness: 0.22, weather: 'clear', site: 'Belrose (Optus)' },
+  // Lekki, ~55 km E of Lagos — dishycentral.com Starlink dataset
+  { name: 'Lagos GW',     lat:   6.4698, lon:   3.5852, wetness: 0.46, weather: 'clear', site: 'Lekki' },
 ]
 
 // ─── Time-varying weather ──────────────────────────────────────────────────
@@ -65,10 +81,17 @@ export const CITIES = [
 // SAA bounding box as a globe.gl polygon (GeoJSON-like)
 // GeoJSON Polygon coordinates: [outerRing, ...holes]
 // Each ring = array of [lon, lat] positions (GeoJSON is lon-first)
+// Published extent at ~500 km altitude: -50 to 0 deg latitude, -90 to +40 deg
+// longitude. Source: NASA GSFC "Ask an Astrophysicist" (1996), via
+// en.wikipedia.org/wiki/South_Atlantic_Anomaly. The previous box here spanned
+// only -80..+10 and clipped 40 deg of the real longitude extent.
+//
+// Caveat kept deliberately: this is a rectangle over an oval whose minimum-field
+// region has since split into two lobes, and the anomaly drifts west ~0.3 deg/yr,
+// so a 1996 extent is approximate for 2026. It over-includes the corners.
 export const SAA_POLYGON = [{
   name: 'SAA',
-  // polygon is already one ring wrapped in the coordinates array
-  polygon: [[-80, -50], [10, -50], [10, 0], [-80, 0], [-80, -50]],
+  polygon: [[-90, -50], [40, -50], [40, 0], [-90, 0], [-90, -50]],
 }]
 
 let selectedCityName = 'Delhi'
@@ -87,7 +110,7 @@ export function initNetwork(world) {
     .polygonSideColor(() => 'rgba(239,68,68,0.05)')
     .polygonStrokeColor(() => 'rgba(239,68,68,0.5)')
     .polygonAltitude(0.018)
-    .polygonLabel(() => '⚠️ South Atlantic Anomaly — Inner Van Allen Belt dips to ~200 km')
+    .polygonLabel(() => '⚠️ South Atlantic Anomaly — inner Van Allen belt dips to ~200 km.<br/>Published extent 50°S–0°, 90°W–40°E (NASA GSFC). Fermi spends ~15% of its time inside it.')
 
   // Gateways as HTML markers
   world

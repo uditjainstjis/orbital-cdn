@@ -317,7 +317,8 @@ function _isEclipsed(lon, now) {
 }
 
 function _inSAA(lat, lon) {
-  return lat >= -50 && lat <= 0 && lon >= -80 && lon <= 10
+  // Published SAA extent at ~500 km: 50S-0, 90W-40E (NASA GSFC, via Wikipedia)
+  return lat >= -50 && lat <= 0 && lon >= -90 && lon <= 40
 }
 
 // ─── Public Queries ───────────────────────────────────────────────────────────

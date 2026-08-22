@@ -69,6 +69,39 @@ regions are far away, and loses where they are close.
 - Policy Pareto frontier (n=739-1158): latency p50 65 ms / 13.7% rain · balanced 67 ·
   reliable 70 ms with **0.0% rain exposure** · green 78 ms, longest paths for solar.
 
+## Grounding — externally checkable, not self-generated
+The fibre baseline is no longer modelled. It is **measured third-party data**:
+WonderNetwork ICMP between VPS nodes (sampled 2026-08-22), cross-checked against
+Azure's published 30-day P50 backbone medians (Jul 2026). Shown in a Grounding
+panel alongside what the physics model *would* have predicted, so the gap is visible.
+
+| origin | km to region | measured | Azure P50 | my model |
+|---|---|---|---|---|
+| New York | 325 | 7.5 | 8 | 15 |
+| London | 637 | 14.4 | 17 | 21 |
+| Delhi | 4,145 | 92.1 | 53 | 79 |
+| Dubai | 4,836 | 122.2 | 100 | 91 |
+| Lagos | 4,873 | 118.5 | — | 92 |
+| Tokyo | 5,322 | 66.4 | 72 | 99 |
+| Sydney | 6,305 | 92.7 | 95 | 116 |
+| Sao Paulo | 7,626 | 113.1 | 118 | 138 |
+
+**The validation that matters:** published LEO-vs-fibre crossover for a 550 km shell
+is **4,472 km** (Chaudhry & Yanikomeroglu, arXiv:2203.00154); Handley (HotNets '18)
+says ~3,000 km for a higher shell. This sim independently lands in the same region —
+loses at London (637 km) and New York (325 km), wins from Delhi (4,145 km) up.
+
+Other corrections from the grounding pass:
+- SAA box was -80..+10 lon; published extent is **-90..+40** (NASA GSFC). Fixed.
+- Gateways were city-centre pins; now **real teleport coordinates** (Seletar,
+  Usingen, Boydton, Hitachinaka, Santana de Parnaiba, Belrose, Lekki). Mumbai has
+  no published coordinate and is labelled approximate.
+- Constellation is honestly described as a **1/8-scale model** of Starlink's
+  authorised Gen1 shell 1 (1,584 sats, 72x22, 550 km/53.0°, FCC 21-48).
+- Fibre constants checked: n=1.468 is exact; route factor 1.42 alone is optimistic
+  (published rule of thumb 2.1, best-achievable 1.3) but the composite model lands
+  at effective stretch ~1.84-1.96 long-haul vs measured median 2.05.
+
 ## Live / refuted
 - LIVE: dev server `npx vite --port 5178`. Build clean.
 - NOT YET DONE: push + Vercel deploy (needs Udit's go-ahead), README/FEATURES rewrite.

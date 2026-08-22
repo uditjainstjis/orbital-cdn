@@ -111,13 +111,54 @@ export const TERRESTRIAL_ORIGINS = [
 ]
 
 /**
- * Terrestrial fibre RTT from a city to its nearest cloud region.
+ * MEASURED terrestrial RTT from each origin to its nearest cloud region.
  *
- * Not idealised glass-speed: includes the route winding factor, per-distance
- * switching/amplification cost, and last-mile access latency, which is why
- * this lands near real measured intercontinental RTTs rather than under them.
+ * These are not modelled. They are third-party measurements, so the central
+ * claim this simulator makes — that an orbital path beats terrestrial fibre for
+ * some origins and not others — is checkable by anyone with a ping client.
+ *
+ * Source: WonderNetwork Global Ping Statistics (wondernetwork.com/pings),
+ * ICMP between the operator's own VPS nodes, sampled 2026-08-22. These are
+ * datacentre-to-datacentre and therefore exclude consumer last-mile latency,
+ * which makes them a CONSERVATIVE baseline: a real user's fibre RTT is higher,
+ * so the orbital advantage reported here is understated, not inflated.
+ *
+ * Cross-check against Azure's published 30-day P50 backbone medians
+ * (learn.microsoft.com/azure/networking/azure-network-latency, Jul 2026) is
+ * recorded per row. Where the two disagree they are measuring different
+ * networks — public Internet vs private backbone — and the public path is the
+ * right comparator for a CDN serving consumers.
+ */
+const MEASURED_FIBRE_RTT = {
+  //  origin        via              WonderNetwork  (Azure P50 backbone)
+  'Delhi':      { via: 'Singapore',  rtt:  92.1,  azure:  53 },
+  'New York':   { via: 'Washington', rtt:   7.5,  azure:   8 },
+  'London':     { via: 'Frankfurt',  rtt:  14.4,  azure:  17 },
+  'Tokyo':      { via: 'Singapore',  rtt:  66.4,  azure:  72 },
+  'Sao Paulo':  { via: 'Washington', rtt: 113.1,  azure: 118 },
+  'Sydney':     { via: 'Singapore',  rtt:  92.7,  azure:  95 },
+  'Lagos':      { via: 'Frankfurt',  rtt: 118.5,  azure: null },
+  'Dubai':      { via: 'Frankfurt',  rtt: 122.2,  azure: 100 },
+}
+
+export function measuredFibre(cityName) {
+  return MEASURED_FIBRE_RTT[cityName] ?? null
+}
+
+/**
+ * Terrestrial fibre RTT for an origin.
+ *
+ * Uses the measured figure where one exists; falls back to the physical model
+ * (route winding, switching cost, last-mile access) for any origin not in the
+ * measurement set.
  */
 export function fibreBaselineMs(city, procMs) {
+  const m = MEASURED_FIBRE_RTT[city.city]
+  if (m) return m.rtt + procMs
+  return modelledFibreMs(city, procMs)
+}
+
+export function modelledFibreMs(city, procMs) {
   const origin = TERRESTRIAL_ORIGINS.reduce((best, o) => {
     const d = haversine(city.lat, city.lon, o.lat, o.lon)
     return (!best || d < best.d) ? { ...o, d } : best
@@ -199,7 +240,7 @@ function findNearestSat(lat, lon, satList) {
 // ─── SAA check ────────────────────────────────────────────────────────────
 
 function inSAA(lat, lon) {
-  return lat >= -50 && lat <= 0 && lon >= -80 && lon <= 10
+  return lat >= -50 && lat <= 0 && lon >= -90 && lon <= 40
 }
 
 // ─── Controlled policy counterfactual ──────────────────────────────────────

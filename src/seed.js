@@ -79,7 +79,7 @@ function dcLonAt(dc, ts) {
 }
 
 function inSAA(lat, lon) {
-  return lat >= -50 && lat <= 0 && lon >= -80 && lon <= 10
+  return lat >= -50 && lat <= 0 && lon >= -90 && lon <= 40
 }
 
 /** Local solar hour at a longitude — drives the demand curve. */
