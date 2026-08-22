@@ -1854,3 +1854,84 @@ html, body {
 @media (max-width: 1180px) {
   #xo-view { left: 20px; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LEFT PANEL — must fit one screen, never scroll
+   The control panel is the primary interaction surface; a scrollbar there means
+   the Send button can be below the fold, which is the one thing a judge must see.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#panel-left {
+  overflow: hidden !important;
+  display: flex; flex-direction: column;
+}
+#panel-left .panel-section { padding: 11px 14px 12px; flex: 0 0 auto; }
+#panel-left .panel-section:last-of-type { margin-top: auto; padding-top: 8px; }
+#panel-left .panel-label { margin-bottom: 8px; font-size: 10px; }
+
+/* Origin grid — tighter rows */
+.city-grid { gap: 5px; }
+.city-btn { padding: 7px 9px !important; font-size: 12px; }
+.city-btn .cc { min-width: 20px; font-size: 8.5px; margin-right: 6px; }
+
+/* Request type — one line each instead of two */
+.service-list { gap: 5px; }
+.service-btn {
+  padding: 7px 10px !important; gap: 9px; align-items: center;
+}
+.service-btn .svc-name { font-size: 12px; line-height: 1.2; }
+.service-btn .svc-detail { font-size: 9.5px; line-height: 1.25; margin-top: 1px; }
+.service-btn .ic { width: 15px; height: 15px; }
+
+/* Policy — all four on one row */
+.policy-tabs { display: grid !important; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.policy-tab {
+  padding: 7px 4px !important; font-size: 10.5px; gap: 4px; justify-content: center;
+}
+.policy-tab .ic { width: 12px; height: 12px; }
+
+/* Weights — five compact columns rather than five stacked rows */
+.weight-rows {
+  display: grid !important; grid-template-columns: repeat(5, 1fr);
+  gap: 7px; margin: 10px 0 8px;
+}
+.wr { display: flex !important; flex-direction: column; align-items: stretch; gap: 4px; }
+.wr-label { font-size: 8.5px; letter-spacing: 0.08em; text-align: center; }
+.wr-track { height: 5px !important; width: 100%; flex: 0 0 auto !important; }
+.wr-val { font-size: 9.5px; text-align: center; }
+
+.policy-desc { font-size: 10px; line-height: 1.45; }
+
+.send-btn { padding: 11px !important; font-size: 13px; }
+
+/* Short viewports: drop the explanatory line and tighten further */
+@media (max-height: 900px) {
+  #panel-left .panel-section { padding: 9px 14px 10px; }
+}
+@media (max-height: 780px) {
+  .service-btn .svc-detail { display: none; }
+  .service-btn { padding: 8px 10px !important; }
+}
+@media (max-height: 700px) {
+  .policy-desc { display: none; }
+  .city-btn { padding: 6px 8px !important; font-size: 11.5px; }
+  #panel-left .panel-label { margin-bottom: 6px; }
+}
+@media (max-height: 640px) {
+  #panel-left .panel-section { padding: 7px 12px 8px; }
+  /* !important because the compaction block above sets display: grid !important */
+  .weight-rows { display: none !important; }
+  .service-btn { padding: 6px 9px !important; }
+  /* Origins go four-up: two rows instead of four saves more than any other change */
+  .city-grid { grid-template-columns: repeat(4, 1fr) !important; gap: 4px; }
+  .city-btn { padding: 6px 4px !important; font-size: 10.5px; justify-content: center; }
+  .city-btn .cc { display: none; }
+  .policy-tab { font-size: 9.5px; padding: 6px 3px !important; }
+  .policy-tab .ic { display: none; }
+}
+@media (max-height: 560px) {
+  #panel-left .panel-label { font-size: 9px; margin-bottom: 5px; }
+  .service-btn .svc-name { font-size: 11px; }
+  .service-btn { padding: 5px 9px !important; }
+  .send-btn { padding: 9px !important; font-size: 12px; }
+}

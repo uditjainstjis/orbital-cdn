@@ -553,3 +553,6 @@ to the spec's premise: observing removes 78 of 80 failures, forecasting the last
 - [2026-08-22 23:04]
   > continue
 
+- [2026-08-22 23:19]
+  > [Image #5] i don't want this component to be scrollable entire thing should fit in one page without scroll
+
