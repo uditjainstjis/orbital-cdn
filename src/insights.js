@@ -9,8 +9,8 @@ const SECTIONS = [
       <div class="ins-section-eyebrow">Architecture</div>
       <h2 class="ins-section-title">Orbital CDN — "Cloudflare for Space"</h2>
       <p class="ins-section-sub">
-        A three-tier infrastructure that routes requests through Low Earth Orbit satellites instead of terrestrial fiber,
-        cutting end-to-end latency by 30–40% for intercontinental traffic while keeping compute solar-powered and radiation-hardened.
+        A three-tier infrastructure that routes requests through Low Earth Orbit satellites instead of terrestrial fibre,
+        It is not a claim that space is always faster. Across 991 logged requests orbital beat long-haul fibre 68% of the time — 100% from Lagos and 0% from London — and the break-even map shows exactly where the advantage begins.
       </p>
 
       <div class="arch-diagram">
@@ -50,7 +50,7 @@ const SECTIONS = [
         </div>
         <div class="ins-card">
           <div class="ins-card-icon"><i data-ic="server"></i></div>
-          <div class="ins-card-title">3 Orbital DCs</div>
+          <div class="ins-card-title">4 Orbital DCs</div>
           <div class="ins-card-body">Sun-Synchronous Orbit at ~600 km in dawn-dusk configuration. Permanently lit, solar-powered, low thermal cycling vs circular LEO.</div>
         </div>
         <div class="ins-card">
@@ -60,8 +60,8 @@ const SECTIONS = [
         </div>
         <div class="ins-card">
           <div class="ins-card-icon"><i data-ic="bolt"></i></div>
-          <div class="ins-card-title">30–40% Faster</div>
-          <div class="ins-card-body">Light travels 33% faster in vacuum than through silica fiber (c vs ~0.67c). For London → Tokyo, that saves ~45 ms RTT vs undersea cable.</div>
+          <div class="ins-card-title">47% Faster in Vacuum</div>
+          <div class="ins-card-body">Silica fibre carries light at c/1.47 ≈ 203,940 km/s, so vacuum is 47% faster. Whether that wins end-to-end depends on distance — the break-even map shows where it does and does not.</div>
         </div>
       </div>
     `,
@@ -73,10 +73,10 @@ const SECTIONS = [
     label: 'Physics of Speed',
     render: () => `
       <div class="ins-section-eyebrow">Fundamental Advantage</div>
-      <h2 class="ins-section-title">Why Vacuum Beats Fiber</h2>
+      <h2 class="ins-section-title">Why Vacuum Beats Fibre</h2>
       <p class="ins-section-sub">
         The core thesis of Orbital CDN is physical: the speed of light in a vacuum is 299,792 km/s,
-        while optical fiber achieves only ~200,000 km/s due to the glass refractive index (~1.5).
+        while optical fibre achieves only ~200,000 km/s due to the glass refractive index (~1.5).
         That 33% gap compounds across every intercontinental hop.
       </p>
 
@@ -88,18 +88,18 @@ const SECTIONS = [
         </div>
         <div class="ins-card">
           <span class="ins-card-num">~200,000</span>
-          <div class="ins-card-title">km/s in fiber</div>
-          <div class="ins-card-body">Silica fiber refractive index ≈ 1.47 slows photons to ~68% of c. Plus fiber takes longer routes (undersea cables follow shipping lanes).</div>
+          <div class="ins-card-title">km/s in fibre</div>
+          <div class="ins-card-body">Silica fibre refractive index ≈ 1.47 slows photons to ~68% of c. Plus fibre takes longer routes (undersea cables follow shipping lanes).</div>
         </div>
         <div class="ins-card">
           <span class="ins-card-num">~45 ms</span>
           <div class="ins-card-title">RTT saved London↔Tokyo</div>
-          <div class="ins-card-body">London–Tokyo great-circle = 9,560 km. Fiber RTT ≈ 245 ms. Space route via 4 ISL hops ≈ 200 ms. Net gain ≈ 45 ms per round-trip.</div>
+          <div class="ins-card-body">London–Tokyo great-circle = 9,560 km. Fibre RTT ≈ 245 ms. Space route via 4 ISL hops ≈ 200 ms. Net gain ≈ 45 ms per round-trip.</div>
         </div>
         <div class="ins-card">
           <span class="ins-card-num">1,340 km</span>
           <div class="ins-card-title">Uplink + downlink budget</div>
-          <div class="ins-card-body">~600 km uplink to LEO relay + ~600 km to orbital DC + ~140 km slant range overhead. Total vertical travel = 1,340 km vs ~0 km for fiber.</div>
+          <div class="ins-card-body">~600 km uplink to LEO relay + ~600 km to orbital DC + ~140 km slant range overhead. Total vertical travel = 1,340 km vs ~0 km for fibre.</div>
         </div>
       </div>
 
@@ -107,25 +107,34 @@ const SECTIONS = [
         <span class="eq-label">Cost function — as implemented in src/engine.js</span>
         <div class="eq-main">
           C(DC) =
-          <span class="eq-weight">w_lat</span> · <span class="eq-term">d_lon</span>
-          + <span class="eq-weight">w_sol</span> · <span class="eq-term">S_DC</span>
-          + <span class="eq-weight">w_rad</span> · <span class="eq-term">R_DC</span>
-          + <span class="eq-weight">γ·w_sol</span> · <span class="eq-term">P_DC</span>
+          <span class="eq-weight">w_lat</span> · <span class="eq-term">reachMs</span>
+          + <span class="eq-weight">w_sol</span> · <span class="eq-term">25 ms</span> · S_DC
+          + <span class="eq-weight">w_rad</span> · <span class="eq-term">40 ms</span> · R_DC
+          + <span class="eq-weight">w_lat</span> · <span class="eq-term">18 ms</span> · P_lat
+          + <span class="eq-weight">w_rad</span> · <span class="eq-term">18 ms</span> · P_rad
         </div>
         <div class="eq-main">
           C(G) &nbsp;=
-          <span class="eq-weight">w_lat</span> · <span class="eq-term">d_G</span>
+          <span class="eq-weight">w_lat</span> · <span class="eq-term">reachMs</span>
           + <span class="eq-weight">w_wx</span> · <span class="eq-term">W_G</span>
-          + <span class="eq-weight">γ·w_wx</span> · <span class="eq-term">P_G</span>
+          + <span class="eq-weight">w_wx</span> · <span class="eq-term">18 ms</span> · P_G
+          + <span class="eq-weight">w_wx</span> · <span class="eq-term">F_G</span>
         </div>
         <br/>
-        <div class="eq-cmt">// d_lon = normalised longitude separation, origin to DC   (0-1)</div>
-        <div class="eq-cmt">// S_DC  = 1 if DC eclipsed, 0 if sunlit                   (reward solar compute)</div>
-        <div class="eq-cmt">// R_DC  = 1 if DC inside the SAA bounding box, else 0     (radiation dose)</div>
-        <div class="eq-cmt">// d_G   = normalised angular distance, origin to gateway  (0-1)</div>
-        <div class="eq-cmt">// W_G   = 0 clear, 0.5 cloudy, 1.0 rain                   (Ka-band rain fade)</div>
-        <div class="eq-cmt">// P_DC, P_G = LEARNED penalties from observed telemetry over the selected window</div>
-        <div class="eq-cmt">// γ     = 0.6, adaptation gain — how far history may bend the policy weights</div>
+        <div class="eq-cmt">// Every term is in MILLISECONDS. That is the whole design: sunlight, radiation</div>
+        <div class="eq-cmt">// and rain are not thresholds to trip, they are costs to trade against distance.</div>
+        <div class="eq-cmt">//</div>
+        <div class="eq-cmt">// reachMs = great-circle reach, origin to candidate           (ms, not a 0-1 score)</div>
+        <div class="eq-cmt">// S_DC    = 1 if DC eclipsed, 0 if sunlit                     (25 ms — reward solar)</div>
+        <div class="eq-cmt">// R_DC    = 1 if DC inside the SAA bounding box, else 0       (40 ms — radiation dose)</div>
+        <div class="eq-cmt">// W_G     = 0 clear · 8 ms cloudy · 22 ms rain                (Ka-band rain fade)</div>
+        <div class="eq-cmt">// F_G     = P(outage) × 900 ms, horizon-tapered, confidence-damped   (forecast)</div>
+        <div class="eq-cmt">//</div>
+        <div class="eq-cmt">// P_lat, P_rad, P_G = LEARNED penalties from observed telemetry over the window.</div>
+        <div class="eq-cmt">// Each is carried by the weight of the objective it belongs to: observed tail</div>
+        <div class="eq-cmt">// latency is a latency cost, observed SAA exposure is a radiation cost. Scaling</div>
+        <div class="eq-cmt">// radiation history by w_sol was a bug, and is why these are two terms, not one.</div>
+        <div class="eq-cmt">// 18 ms = ADAPT_COST_MS 30 × ADAPT_GAIN 0.6 — how far history may bend a policy.</div>
       </div>
 
       <p class="ins-section-sub">
@@ -445,7 +454,7 @@ const SECTIONS = [
           <div class="ins-ref-num">[1]</div>
           <div class="ins-ref-body">
             <span class="ins-ref-title">Handley, M. (2018) — Delay is Not an Option: Low Latency Routing in Space</span>
-            ACM HotNets 2018. Foundational analysis showing LEO vacuum routing beats transatlantic fiber for distances > 3,000 km. Demonstrates the theoretical 33% speed advantage translates to 30–40 ms savings on London–NYC routes.
+            ACM HotNets 2018. Foundational analysis showing LEO vacuum routing beats transatlantic fibre for distances > 3,000 km. Demonstrates the theoretical 33% speed advantage translates to 30–40 ms savings on London–NYC routes.
           </div>
         </div>
         <div class="ins-ref">

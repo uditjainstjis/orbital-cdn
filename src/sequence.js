@@ -107,7 +107,7 @@ export async function runSequence(data, world) {
 
   _addDecision({
     icon: '<i data-ic="antenna"></i>', bg: 'rgba(0,212,255,0.15)', title: 'Uplink Satellite Selected',
-    body: `Nearest satellite to <b>${city.city}</b> above 25° elevation mask. Vacuum laser: <b>c = 299,792 km/s</b> — 40% faster than fiber.`,
+    body: `Nearest satellite to <b>${city.city}</b> above 25° elevation mask. Vacuum laser: <b>c = 299,792 km/s</b> — 47% faster than fibre (silica n ≈ 1.47).`,
     hl: `SAT-${uplink.id} @ ${uplink.lat.toFixed(1)}°, ${uplink.lon.toFixed(1)}° ${uplink.inSAA ? '<i data-ic="warning"></i> near SAA' : ''}`,
     hlColor: '#00d4ff', step: 2,
   })
@@ -175,7 +175,7 @@ export async function runSequence(data, world) {
   _addDecision({
     icon: '<i data-ic="bolt"></i>', bg: 'rgba(0,255,136,0.1)', title: `ISL Path: ${nHops + 2} hops`,
     body: policy === 'latency'
-      ? 'Shortest hop count. Vacuum ISL 40% faster than terrestrial fiber for intercontinental distances.'
+      ? 'Shortest hop count. Vacuum ISL 47% faster than terrestrial fibre for intercontinental distances.'
       : saaCross > 0 && policy === 'reliable'
         ? `SAA-crossing hops detected (${saaCross}) — rerouting around radiation zone.`
         : `Path minimises energy + SAA exposure. Cross-plane ISLs disabled above |lat| 60° (pole instability).`,
@@ -277,7 +277,7 @@ export async function runSequence(data, world) {
 
   _addDecision({
     icon: '<i data-ic="check"></i>', bg: 'rgba(0,212,255,0.12)', title: 'Request Complete',
-    body: `Processed at ${dc.dcName}. Returned via ${gw.name}. Vacuum ISL saved ~${saving} ms vs terrestrial fiber.`,
+    body: `Processed at ${dc.dcName}. Returned via ${gw.name}. Vacuum ISL saved ~${saving} ms vs terrestrial fibre.`,
     hl: `RTT ${rtt} ms · ${stretch <= 0 ? `${Math.abs(stretch)}% faster than fibre` : `${stretch}% slower than fibre`} · ${dc.eclipsed ? '<i data-ic="battery"></i> Battery' : '<i data-ic="sun"></i> Solar'}`,
     hlColor: '#00d4ff', step: 8,
   })

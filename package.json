@@ -8,7 +8,8 @@
     "preview": "vite preview",
     "test:itu": "node src/predict/itu.test.mjs",
     "data:weather": "python3 ml/fetch_weather.py",
-    "train:fade": "python3 ml/train_fade_risk.py"
+    "train:fade": "python3 ml/train_fade_risk.py",
+    "test": "node --test test/*.test.mjs src/predict/itu.test.mjs"
   },
   "dependencies": {
     "globe.gl": "^2.31.3",

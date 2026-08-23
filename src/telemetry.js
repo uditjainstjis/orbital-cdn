@@ -42,11 +42,40 @@ function load() {
   return cache
 }
 
+/**
+ * Is there a working localStorage at all?
+ *
+ * Private windows and blocked site data throw on access. Probed once, because
+ * the answer cannot change within a page lifetime.
+ *
+ * The distinction is load-bearing: persist() used to treat every throw as quota
+ * exhaustion and respond by discarding half the log, so in a browser with site
+ * data disabled each recorded request silently destroyed half the user's
+ * telemetry and every windowed summary built on it was quietly wrong. Storage
+ * being absent is not the same failure as storage being full.
+ */
+let storageOk = null
+function haveStorage() {
+  if (storageOk !== null) return storageOk
+  try {
+    const probe = `${KEY}.probe`
+    localStorage.setItem(probe, '1')
+    localStorage.removeItem(probe)
+    storageOk = true
+  } catch {
+    storageOk = false
+  }
+  return storageOk
+}
+
 function persist() {
+  // No storage: the in-memory log is the whole product state for this session.
+  // Keep every row rather than deleting data to satisfy a sink that isn't there.
+  if (!haveStorage()) return
   try {
     localStorage.setItem(KEY, JSON.stringify(cache))
   } catch {
-    // Quota exceeded — drop the oldest half and retry once.
+    // Storage exists and rejected the write, so this genuinely is quota.
     cache = cache.slice(Math.floor(cache.length / 2))
     try { localStorage.setItem(KEY, JSON.stringify(cache)) } catch { /* give up */ }
   }

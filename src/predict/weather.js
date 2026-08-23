@@ -11,8 +11,8 @@
 // stated in the UI — an hour of weather every few seconds, not a claim that
 // rain evolves that fast.
 
-import TRACE from './weather_trace.json'
-import MODEL from './fade_model.json'
+import TRACE from './weather_trace.json' with { type: 'json' }
+import MODEL from './fade_model.json' with { type: 'json' }
 import { predictProba, vectorise } from './gbm.js'
 import { instantaneousFadeDb, outageProbability } from './itu.js'
 

@@ -16,7 +16,7 @@
 
 import { TERRESTRIAL_ORIGINS, haversine } from './engine.js'
 import { CITIES, GATEWAYS } from './network.js'
-import LAND from './land.json'   // Natural Earth 110m land, RDP-simplified to 813 points
+import LAND from './land.json' with { type: 'json' }   // Natural Earth 110m land, RDP-simplified to 813 points
 
 const R_EARTH = 6371
 const CROSSOVER_KM = 4472        // Chaudhry & Yanikomeroglu, arXiv:2203.00154, 550 km shell

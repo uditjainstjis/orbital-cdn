@@ -115,7 +115,10 @@ export function setTicker(text) {
   if (!el) return
   if (!text) { el.classList.add('hidden'); return }
   el.classList.remove('hidden')
-  document.getElementById('ticker-text').textContent = text
+  // innerHTML, not textContent: every beat leads with an `<i data-ic>` icon
+  // placeholder that the MutationObserver in icons.js hydrates on insert.
+  // textContent printed the raw tag through the entire cinematic.
+  document.getElementById('ticker-text').innerHTML = text
 }
 
 // ─── Metrics ──────────────────────────────────────────────────────────────
@@ -263,7 +266,7 @@ RTT_fibre_baseline = <span class="val">${baseline} ms</span>  Delta = <span clas
         <p style="margin-top:8px">Same path would be: <strong style="color:var(--red)">${propFib} ms</strong> → ISL saves <strong style="color:var(--cyan)">${saving} ms</strong> one-way</p>
       </div>
     </div>
-    <div class="code-block" style="margin-top:12px"><span class="cmt">// Break-even (ISL vs fewer fiber hops):</span>
+    <div class="code-block" style="margin-top:12px"><span class="cmt">// Break-even (ISL vs fewer fibre hops):</span>
 d_breakeven ≈ <span class="val">3,000 km</span>  <span class="cmt">// below this, hop-count overhead negates speed gain</span>
 d_this      = <span class="val">${baseDist} km</span>  →  <span class="ok">ISL wins by ${saving} ms one-way (${(saving * 2).toFixed(0)} ms RTT)</span>
 

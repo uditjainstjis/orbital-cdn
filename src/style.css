@@ -947,7 +947,7 @@ html, body {
   .logo { font-size:11px; white-space:nowrap; }
   .logo span { display:none; }
   .top-badges { gap:5px; flex-shrink:0; }
-  .badge-sats, .badge-dc, .badge-time { display:none; }
+  .top-badges .badge-sats, .top-badges .badge-dc, .top-badges .badge-time { display:none; }
   .badge-live { font-size:9px; padding:2px 7px; }
   .insights-btn { font-size:9px !important; padding:3px 8px !important; }
 
@@ -1701,9 +1701,9 @@ html, body {
   padding: 6px 10px; font-size: 10px; line-height: 1;
 }
 .top-badges .badge .ic { opacity: .85; }
-@media (max-width: 1620px) { .badge-dc { display: none; } }
-@media (max-width: 1480px) { .badge-time { display: none; } }
-@media (max-width: 1360px) { .badge-sats { display: none; } }
+@media (max-width: 1620px) { .top-badges .badge-dc { display: none; } }
+@media (max-width: 1480px) { .top-badges .badge-time { display: none; } }
+@media (max-width: 1360px) { .top-badges .badge-sats { display: none; } }
 
 /* City buttons carry a country chip rather than a flag emoji */
 .city-btn { display: flex !important; align-items: center; gap: 0; }
@@ -1934,4 +1934,26 @@ html, body {
   .service-btn .svc-name { font-size: 11px; }
   .service-btn { padding: 5px 9px !important; }
   .send-btn { padding: 9px !important; font-size: 12px; }
+}
+
+/* ── Navigation must never be clipped off the edge ──────────────────────────
+   `.top-badges .badge` is specificity (0,2,0) and every badge-hide rule above
+   is (0,1,0). Media queries contribute no specificity, so the hide rules never
+   won and below ~1180px the bar overflowed: the stage switch and the three
+   overlay buttons were pushed off-screen with no horizontal scroll to reach
+   them. Badges are informational and drop out; navigation wraps instead. */
+#topbar { flex-wrap: wrap; row-gap: 6px; }
+.top-badges { flex-wrap: wrap; overflow: visible; }
+@media (max-width: 1240px) { .top-badges .badge-live { display: none; } }
+
+/* ── The bottom sheet is allowed to scroll ──────────────────────────────────
+   The no-scroll guarantee is a DESKTOP guarantee. Below 768px the panel is a
+   bottom sheet that cannot guarantee a fit against an arbitrary phone
+   viewport, and `overflow: hidden` was outranking its own `overflow-y: auto` —
+   so instead of scrolling it discarded up to 87px of content, taking the whole
+   routing-policy weight group with it. Clipping with no scrollbar is strictly
+   worse than showing one. */
+@media (max-width: 768px) {
+  #panel-left { overflow-y: auto !important; overscroll-behavior: contain;
+                left: 0 !important; right: 0 !important; }
 }
