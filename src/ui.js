@@ -1,6 +1,5 @@
 // UI: left panel interactions, right panel reveals, deep dive modal, inspector
 import { POLICY_WEIGHTS, POLICY_DESCS } from './engine.js'
-import { PALETTE } from './palette.js'
 
 // ─── State ────────────────────────────────────────────────────────────────
 
@@ -116,10 +115,7 @@ export function setTicker(text) {
   if (!el) return
   if (!text) { el.classList.add('hidden'); return }
   el.classList.remove('hidden')
-  // innerHTML, not textContent: every beat leads with an `<i data-ic>` icon
-  // placeholder, which the MutationObserver in icons.js hydrates on insert.
-  // Assigning textContent here printed the raw tag through the whole cinematic.
-  document.getElementById('ticker-text').innerHTML = text
+  document.getElementById('ticker-text').textContent = text
 }
 
 // ─── Metrics ──────────────────────────────────────────────────────────────
@@ -267,7 +263,7 @@ RTT_fibre_baseline = <span class="val">${baseline} ms</span>  Delta = <span clas
         <p style="margin-top:8px">Same path would be: <strong style="color:var(--red)">${propFib} ms</strong> → ISL saves <strong style="color:var(--cyan)">${saving} ms</strong> one-way</p>
       </div>
     </div>
-    <div class="code-block" style="margin-top:12px"><span class="cmt">// Break-even (ISL vs fewer fibre hops):</span>
+    <div class="code-block" style="margin-top:12px"><span class="cmt">// Break-even (ISL vs fewer fiber hops):</span>
 d_breakeven ≈ <span class="val">3,000 km</span>  <span class="cmt">// below this, hop-count overhead negates speed gain</span>
 d_this      = <span class="val">${baseDist} km</span>  →  <span class="ok">ISL wins by ${saving} ms one-way (${(saving * 2).toFixed(0)} ms RTT)</span>
 
@@ -303,13 +299,13 @@ score = <span class="val">${w.lat}</span>·dist + <span class="val">${w.sol}</sp
     <div class="code-block" style="margin-bottom:12px"><span class="cmt">// Walker-Delta 53° incl., 6 planes × 12 sats · cross-plane ISL disabled |lat|>60°</span>
 <span class="cmt">// Total hops: ${d.nHops + 2} · SAA crossings: ${d.saaCross}</span></div>
     <div>${[
-      { label: 'User',      dot: PALETTE.text,     val: `${d.city.city} (${d.city.lat.toFixed(1)}°, ${d.city.lon.toFixed(1)}°)`,       note: 'Origin' },
-      { label: 'Uplink',   dot: PALETTE.info,  val: `SAT-${d.uplink.id} @ ${d.uplink.lat.toFixed(1)}°, ${d.uplink.lon.toFixed(1)}°`, note: d.uplink.inSAA ? '<i data-ic="warning"></i> near SAA' : 'clear' },
-      ...d.hopSats.map((h, i) => ({ label: `Relay ${i + 1}`, dot: PALETTE.pos, val: `${h.lat.toFixed(1)}°, ${h.lon.toFixed(1)}°`, note: h.inSAA ? '<i data-ic="warning"></i> SAA' : 'clear' })),
-      { label: 'Orb DC',   dot: PALETTE.accent,  val: `${d.dc.dcName} @ ${d.dc.lat.toFixed(1)}°, ${d.dc.lon.toFixed(1)}°`,           note: d.dc.eclipsed ? '<i data-ic="eclipse"></i> Eclipse' : '<i data-ic="sun"></i> Sunlit' },
-      ...d.hopSats.slice().reverse().map((h, i) => ({ label: `Relay ${d.nHops - i}`, dot: PALETTE.pos, val: `${h.lat.toFixed(1)}°, ${h.lon.toFixed(1)}°`, note: 'return path' })),
-      { label: 'GW Sat',   dot: PALETTE.info,  val: `SAT-${d.gwSat.id} @ ${d.gwSat.lat.toFixed(1)}°, ${d.gwSat.lon.toFixed(1)}°`,  note: 'downlink node' },
-      { label: 'Gateway',  dot: PALETTE.pos,  val: `${d.gw.name} (${d.gw.lat.toFixed(1)}°, ${d.gw.lon.toFixed(1)}°)`,              note: d.gw.weather },
+      { label: 'User',      dot: '#fff',     val: `${d.city.city} (${d.city.lat.toFixed(1)}°, ${d.city.lon.toFixed(1)}°)`,       note: 'Origin' },
+      { label: 'Uplink',   dot: '#00d4ff',  val: `SAT-${d.uplink.id} @ ${d.uplink.lat.toFixed(1)}°, ${d.uplink.lon.toFixed(1)}°`, note: d.uplink.inSAA ? '<i data-ic="warning"></i> near SAA' : 'clear' },
+      ...d.hopSats.map((h, i) => ({ label: `Relay ${i + 1}`, dot: '#00ff88', val: `${h.lat.toFixed(1)}°, ${h.lon.toFixed(1)}°`, note: h.inSAA ? '<i data-ic="warning"></i> SAA' : 'clear' })),
+      { label: 'Orb DC',   dot: '#f59e0b',  val: `${d.dc.dcName} @ ${d.dc.lat.toFixed(1)}°, ${d.dc.lon.toFixed(1)}°`,           note: d.dc.eclipsed ? '<i data-ic="eclipse"></i> Eclipse' : '<i data-ic="sun"></i> Sunlit' },
+      ...d.hopSats.slice().reverse().map((h, i) => ({ label: `Relay ${d.nHops - i}`, dot: '#00ff88', val: `${h.lat.toFixed(1)}°, ${h.lon.toFixed(1)}°`, note: 'return path' })),
+      { label: 'GW Sat',   dot: '#00d4ff',  val: `SAT-${d.gwSat.id} @ ${d.gwSat.lat.toFixed(1)}°, ${d.gwSat.lon.toFixed(1)}°`,  note: 'downlink node' },
+      { label: 'Gateway',  dot: '#10b981',  val: `${d.gw.name} (${d.gw.lat.toFixed(1)}°, ${d.gw.lon.toFixed(1)}°)`,              note: d.gw.weather },
     ].map(h => `
       <div class="hop-row">
         <div class="hop-dot" style="background:${h.dot}"></div>

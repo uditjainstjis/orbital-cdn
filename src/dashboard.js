@@ -12,7 +12,6 @@ import {
 } from './telemetry.js'
 import { measuredFibre, modelledFibreMs, haversine, TERRESTRIAL_ORIGINS } from './engine.js'
 import { CITIES } from './network.js'
-import { PALETTE } from './palette.js'
 
 let currentWindow = '7d'
 let onDataChange  = () => {}
@@ -62,7 +61,7 @@ function chartTraffic(series, bucket) {
 
   const bars = series.map((s, i) => {
     const h = s.n ? Math.max(2, PT + ih - yN(s.n)) : 0
-    return `<rect x="${(x(i) - bw / 2).toFixed(1)}" y="${(PT + ih - h).toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="rgba(125,148,184,0.55)"${s.partial ? ' opacity="0.4" stroke="rgba(125,148,184,0.45)" stroke-dasharray="2 2"' : ''}>
+    return `<rect x="${(x(i) - bw / 2).toFixed(1)}" y="${(PT + ih - h).toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="url(#dashBar)"${s.partial ? ' opacity="0.4" stroke="rgba(0,212,255,0.35)" stroke-dasharray="2 2"' : ''}>
       <title>${fmtTick(s.t, bucket)} — ${s.n} requests${s.partial ? ' (partial bucket — clipped by the window edge)' : ''}</title></rect>`
   }).join('')
 
@@ -88,17 +87,23 @@ function chartTraffic(series, bucket) {
 
   return `
   <svg viewBox="0 0 ${W} ${H}" class="dash-svg" preserveAspectRatio="xMidYMid meet">
+    <defs>
+      <linearGradient id="dashBar" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"   stop-color="#00d4ff" stop-opacity="0.75"/>
+        <stop offset="100%" stop-color="#00d4ff" stop-opacity="0.14"/>
+      </linearGradient>
+    </defs>
     ${gridY}${bars}
-    ${p95Line ? `<polyline points="${p95Line}" fill="none" stroke="${PALETTE.neg}" stroke-width="1.6" stroke-dasharray="4 3" opacity="0.85"/>` : ''}
-    ${p50Line ? `<polyline points="${p50Line}" fill="none" stroke="${PALETTE.accent}" stroke-width="2.2"/>` : ''}
+    ${p95Line ? `<polyline points="${p95Line}" fill="none" stroke="#ef4444" stroke-width="1.6" stroke-dasharray="4 3" opacity="0.85"/>` : ''}
+    ${p50Line ? `<polyline points="${p50Line}" fill="none" stroke="#f59e0b" stroke-width="2.2"/>` : ''}
     ${ticks}
     <text x="${PL - 8}" y="${PT - 6}" class="ax-title" text-anchor="end">REQS</text>
     <text x="${W - PR + 8}" y="${PT - 6}" class="ax-title">ms</text>
   </svg>
   <div class="dash-legend">
-    <span><i class="sw" style="background:${PALETTE.info}"></i>Requests</span>
-    <span><i class="sw" style="background:${PALETTE.accent}"></i>p50 RTT</span>
-    <span><i class="sw sw-d" style="background:${PALETTE.neg}"></i>p95 RTT</span>
+    <span><i class="sw" style="background:#00d4ff"></i>Requests</span>
+    <span><i class="sw" style="background:#f59e0b"></i>p50 RTT</span>
+    <span><i class="sw sw-d" style="background:#ef4444"></i>p95 RTT</span>
     ${series.some(s => s.partial) ? '<span style="opacity:.7">faded bars = partial bucket at the window edge</span>' : ''}
   </div>`
 }
@@ -109,7 +114,7 @@ function chartShare(rows, total, color) {
   return `<div class="share-list">` + rows.map(r => `
     <div class="share-row">
       <span class="share-key">${r.key}</span>
-      <div class="share-track"><div class="share-fill" style="width:${total ? (r.n / total) * 100 : 0}%;background:${color};opacity:.72"></div></div>
+      <div class="share-track"><div class="share-fill" style="width:${total ? (r.n / total) * 100 : 0}%;background:${color}"></div></div>
       <span class="share-n">${r.n}</span>
       <span class="share-x">${r.p50 ? ms(r.p50) : '—'}</span>
     </div>`).join('') + `</div>`
@@ -124,7 +129,7 @@ function chartWinRate(rows) {
     return `
     <div class="share-row win-row">
       <span class="share-key">${r.key}</span>
-      <div class="share-track"><div class="share-fill" style="width:${r.winRate * 100}%;background:${col};opacity:.72"></div></div>
+      <div class="share-track"><div class="share-fill" style="width:${r.winRate * 100}%;background:${col}"></div></div>
       <span class="share-n" style="color:${col}">${pct(r.winRate)}</span>
       <span class="share-x">${r.savedMs >= 1 ? '−' + ms(r.savedMs) : '—'}</span>
     </div>`
@@ -195,17 +200,13 @@ function groundingPanel(s) {
 // ─── Sections ──────────────────────────────────────────────────────────────
 
 function kpis(s) {
-  // Colour here is a claim that a number is good or bad. A request count is
-  // neither, and neither is a tail latency without a target to miss. Only the
-  // two figures that ARE a verdict — how much of the traffic ran on sunlight,
-  // and how much of it beat fibre — earn a hue; the rest read as plain type.
   const cards = [
-    { v: num(s.overall.n),        l: 'Requests served',   c: 'var(--text)' },
-    { v: ms(s.overall.p50),       l: 'p50 end-to-end RTT',c: 'var(--text)' },
-    { v: ms(s.overall.p95),       l: 'p95 tail RTT',      c: 'var(--text)' },
-    { v: pct(s.overall.solar),    l: 'Solar-served',      c: 'var(--pos)'  },
-    { v: num(s.overall.saaTot),   l: 'SAA hops crossed',  c: 'var(--text)' },
-    { v: pct(s.overall.winRate),  l: 'Beat fibre',        c: 'var(--pos)'  },
+    { v: num(s.overall.n),        l: 'Requests served',   c: 'var(--cyan)'   },
+    { v: ms(s.overall.p50),       l: 'p50 end-to-end RTT',c: 'var(--amber)'  },
+    { v: ms(s.overall.p95),       l: 'p95 tail RTT',      c: 'var(--red)'    },
+    { v: pct(s.overall.solar),    l: 'Solar-served',      c: 'var(--green)'  },
+    { v: num(s.overall.saaTot),   l: 'SAA hops crossed',  c: 'var(--purple)' },
+    { v: pct(s.overall.winRate),  l: 'Beat fibre',        c: 'var(--blue)'   },
   ]
   return `<div class="kpi-grid">` + cards.map(c => `
     <div class="kpi-card">
@@ -436,30 +437,16 @@ export function renderIdleSummary() {
   const s = summarize('7d')
   if (!s.overall.n) return
 
-  // Show every origin, not a top-4 and a bottom-2. Slicing dropped exactly the
-  // rows that carry the argument: the cities at 65% and 75% are the crossover
-  // itself, and without them the panel is four full bars and two empty ones —
-  // a chart with no discriminating information. Distance is shown alongside
-  // because distance is the variable the whole thesis turns on.
-  const kmToRegion = name => {
-    const c = CITIES.find(x => x.city === name)
-    if (!c) return null
-    return TERRESTRIAL_ORIGINS.reduce((best, o) => {
-      const d = haversine(c.lat, c.lon, o.lat, o.lon)
-      return best === null || d < best ? d : best
-    }, null)
-  }
   const rank = [...s.byCity].filter(c => c.n >= 3).sort((a, b) => b.winRate - a.winRate)
-  const wins = rank.filter(c => c.winRate > 0)
-  const loss = rank.filter(c => c.winRate === 0)
+  const top  = rank.slice(0, 4)
+  const bot  = rank.slice(-2).reverse()
   const pol  = [...s.byPolicy].filter(p => p.n >= 20).sort((a, b) => a.p50 - b.p50)
 
   const row = (r) => {
-    const col = r.winRate > 0.5 ? 'var(--pos)' : r.winRate > 0 ? 'var(--accent)' : 'var(--neg)'
-    const km  = kmToRegion(r.key)
+    const col = r.winRate > 0.5 ? 'var(--green)' : 'var(--red)'
     return `<div class="idle-row">
-      <span class="idle-key">${r.key}${km ? ` <span class="idle-km">${Math.round(km).toLocaleString()} km</span>` : ''}</span>
-      <div class="idle-track"><div class="idle-fill" style="width:${r.winRate * 100}%;background:${col};opacity:.72"></div></div>
+      <span class="idle-key">${r.key}</span>
+      <div class="idle-track"><div class="idle-fill" style="width:${r.winRate * 100}%;background:${col}"></div></div>
       <span class="idle-val" style="color:${col}">${pct(r.winRate)}</span>
     </div>`
   }
@@ -481,9 +468,9 @@ export function renderIdleSummary() {
       </div>
 
       <div class="idle-sec">Where orbital wins</div>
-      ${wins.map(row).join('')}
+      ${top.map(row).join('')}
       <div class="idle-sep">…and where it loses</div>
-      ${loss.map(row).join('')}
+      ${bot.map(row).join('')}
 
       ${pol.length ? `<div class="idle-sep">Fastest policy observed</div>
         <div class="idle-note"><b>${pol[0].key}</b> ${ms(pol[0].p50)} p50 · ${pol[0].n} reqs${

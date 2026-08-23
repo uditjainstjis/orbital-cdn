@@ -6,11 +6,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node --test test/*.test.mjs src/predict/itu.test.mjs",
     "test:itu": "node src/predict/itu.test.mjs",
     "data:weather": "python3 ml/fetch_weather.py",
-    "train:fade": "python3 ml/train_fade_risk.py",
-    "logo": "node tools/make-logo.mjs"
+    "train:fade": "python3 ml/train_fade_risk.py"
   },
   "dependencies": {
     "globe.gl": "^2.31.3",

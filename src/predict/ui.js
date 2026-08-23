@@ -13,7 +13,7 @@ import {
   approvePending, rejectPending, evaluateRoutes, inspectNetwork,
 } from './agent.js'
 import { MODES, AGENT } from './config.js'
-import METRICS from './fade_model_metrics.json' with { type: 'json' }
+import METRICS from './fade_model_metrics.json'
 import { runExperiment } from './experiment.js'
 
 let emit = () => {}

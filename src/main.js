@@ -43,35 +43,6 @@ const _raycaster  = new THREE.Raycaster()
 const _mouse      = new THREE.Vector2()
 let   _hoverReady = false   // enable hover only after first routing completes
 
-/**
- * Swap the drawn placeholder glyph for the brand mark, but only once the raster
- * has actually decoded.
- *
- * `<img onerror>` is not sufficient: a dev server answers a missing .png with
- * index.html at HTTP 200, so the load reports success and the browser paints
- * its own broken-image icon in the top bar. Decoding is the only honest test of
- * whether the file is there, so nothing enters the DOM until it passes.
- */
-function mountBrandMark() {
-  const probe = new Image()
-  probe.onload = () => {
-    if (!probe.naturalWidth) return
-    const slot = document.querySelector('#topbar .logo [data-ic="logo"], #topbar .logo svg')
-    if (slot) {
-      const img = new Image()
-      img.src = probe.src; img.alt = ''; img.className = 'logo-mark'
-      slot.replaceWith(img)
-    }
-    const title = document.querySelector('#intro-card .intro-title')
-    if (title && !document.querySelector('.intro-mark')) {
-      const img = new Image()
-      img.src = probe.src; img.alt = 'Orbital CDN'; img.className = 'intro-mark'
-      title.before(img)
-    }
-  }
-  probe.src = '/logo-mark.png'
-}
-
 async function main() {
   initIcons()          // swap <i data-ic> placeholders for SVG, incl. future renders
 
@@ -532,4 +503,3 @@ function updateArcs(arcs, world) {
 // ─── Run ──────────────────────────────────────────────────────────────────
 
 main().catch(console.error)
-mountBrandMark()

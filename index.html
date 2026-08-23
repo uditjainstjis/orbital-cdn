@@ -3,16 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Orbital CDN — Where Orbital Routing Wins</title>
+  <title>Orbital CDN — 3D Live Simulator</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
-  <link rel="icon" href="/favicon.ico" sizes="any" />
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
-  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-  <meta name="theme-color" content="#0e0f12" />
-  <meta name="description" content="A routing and control plane for a content-delivery network whose edge nodes are in low Earth orbit." />
   <link rel="stylesheet" href="/src/style.css" />
 </head>
 <body>
@@ -24,6 +18,7 @@
       <div id="xo-view">
         <div class="xo-head">
           <div>
+            <div class="xo-eyebrow">Measured result</div>
             <h2 class="xo-title">Where routing through orbit actually wins</h2>
           </div>
           <div class="xo-stat" id="xo-stat"></div>
@@ -42,7 +37,7 @@
 
     <!-- Top bar -->
     <div id="topbar">
-      <div class="logo"><i data-ic="logo" data-size="18"></i><b>ORBITAL CDN</b><span>Routing control plane</span></div>
+      <div class="logo"><i data-ic="logo" data-size="18"></i><b>ORBITAL CDN</b><span>3D Live Simulator</span></div>
       <div class="top-badges">
         <span class="badge badge-live"><span class="pulse"></span> LIVE 3D</span>
         <span class="badge badge-sats" id="sat-badge">180 SATS</span>
@@ -116,11 +111,11 @@
           <button class="policy-tab" data-policy="reliable"><i data-ic="shield"></i> Reliable</button>
         </div>
         <div class="weight-rows" id="weight-rows">
-          <div class="wr"><span class="wr-label">LAT</span><div class="wr-track"><div class="wr-fill" id="w-lat"></div></div><span class="wr-val" id="wv-lat">0.5</span></div>
-          <div class="wr"><span class="wr-label">SOL</span><div class="wr-track"><div class="wr-fill" id="w-sol"></div></div><span class="wr-val" id="wv-sol">0.5</span></div>
-          <div class="wr"><span class="wr-label">RAD</span><div class="wr-track"><div class="wr-fill" id="w-rad"></div></div><span class="wr-val" id="wv-rad">0.5</span></div>
-          <div class="wr"><span class="wr-label">WX</span><div class="wr-track"><div class="wr-fill" id="w-wx"></div></div><span class="wr-val" id="wv-wx">0.4</span></div>
-          <div class="wr"><span class="wr-label">ENG</span><div class="wr-track"><div class="wr-fill" id="w-eng"></div></div><span class="wr-val" id="wv-eng">0.4</span></div>
+          <div class="wr"><span class="wr-label">LAT</span><div class="wr-track"><div class="wr-fill" id="w-lat" style="background:var(--cyan)"></div></div><span class="wr-val" id="wv-lat">0.5</span></div>
+          <div class="wr"><span class="wr-label">SOL</span><div class="wr-track"><div class="wr-fill" id="w-sol" style="background:var(--green)"></div></div><span class="wr-val" id="wv-sol">0.5</span></div>
+          <div class="wr"><span class="wr-label">RAD</span><div class="wr-track"><div class="wr-fill" id="w-rad" style="background:var(--red)"></div></div><span class="wr-val" id="wv-rad">0.5</span></div>
+          <div class="wr"><span class="wr-label">WX</span><div class="wr-track"><div class="wr-fill" id="w-wx" style="background:var(--blue)"></div></div><span class="wr-val" id="wv-wx">0.4</span></div>
+          <div class="wr"><span class="wr-label">ENG</span><div class="wr-track"><div class="wr-fill" id="w-eng" style="background:var(--amber)"></div></div><span class="wr-val" id="wv-eng">0.4</span></div>
         </div>
         <div id="policy-desc" class="policy-desc">Balanced: moderate latency trade-off, prefers sunlit DCs, avoids heavy weather.</div>
       </div>
@@ -193,6 +188,7 @@
     <!-- First-run brief: what this is, and where the substance is -->
     <div id="intro-card" class="glass-panel hidden">
       <button id="intro-close" title="Dismiss"><i data-ic="close"></i></button>
+      <div class="intro-eyebrow">ORBITAL CDN</div>
       <h1 class="intro-title">Two thirds of the planet is far from a cloud region.</h1>
       <p class="intro-body">
         Content served from orbit can beat long-haul fibre for those users — but only if the router
