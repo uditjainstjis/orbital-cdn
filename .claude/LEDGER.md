@@ -944,3 +944,9 @@ Edit/Write and every Stop; left as an opt-in. Vendored copy gitignored.
 - [2026-08-23 02:26]
   > [Image #7] put this logo to the website as a title and put where it needed
 
+- [2026-08-23 02:32]
+  > show me the previe
+
+- [2026-08-23 06:59]
+  > we have to record a product demo video it should be short and crisp please generate a script and also list what visuals from the website is to be associated with the audio
+
