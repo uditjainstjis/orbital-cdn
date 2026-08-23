@@ -597,3 +597,9 @@ Edit/Write and every Stop; left as an opt-in. Vendored copy gitignored.
 - [2026-08-23 07:53]
   > work on things u think u shall also, we would require a YouTube unlisted link explaining our project, so u gonna give us small small scripts we gonna read and later u will edit stitch them into a real demo
 
+- [2026-08-23 09:02]
+  > the 12 latest videos recorded on photobooth have the audio, the oldest of the bunch being the start and the most recent being the final, record the screen clips and splice them with the audios in accordance with the script
+
+- [2026-08-23 09:37]
+  > bro u didnt take the face, in photo booth it wasnt just audio but the guy narrating in the vid, thats gonna create engagement and hook judges, also get me ppt, fast
+
